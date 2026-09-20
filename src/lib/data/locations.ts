@@ -1,0 +1,48 @@
+import { Location } from "@/types";
+
+export const locations: Location[] = [
+  {
+    id: "loc-downtown",
+    name: "Ember Downtown",
+    address: "412 Market Street, Downtown",
+    hours: "10:00 AM – 12:00 AM",
+    distanceMiles: 0.8,
+    deliveryAvailable: true,
+    pickupEta: "12–18 min",
+    lat: 37.7749,
+    lng: -122.4194,
+  },
+  {
+    id: "loc-riverside",
+    name: "Ember Riverside",
+    address: "88 Riverside Ave, Riverside District",
+    hours: "10:00 AM – 11:00 PM",
+    distanceMiles: 1.6,
+    deliveryAvailable: true,
+    pickupEta: "15–20 min",
+    lat: 37.7952,
+    lng: -122.3937,
+  },
+  {
+    id: "loc-university",
+    name: "Ember University Row",
+    address: "220 Campus Boulevard",
+    hours: "9:00 AM – 1:00 AM",
+    distanceMiles: 2.3,
+    deliveryAvailable: true,
+    pickupEta: "10–15 min",
+    lat: 37.7599,
+    lng: -122.4574,
+  },
+  {
+    id: "loc-northgate",
+    name: "Ember Northgate",
+    address: "1500 Northgate Plaza",
+    hours: "10:00 AM – 10:00 PM",
+    distanceMiles: 3.9,
+    deliveryAvailable: false,
+    pickupEta: "18–25 min",
+    lat: 37.8272,
+    lng: -122.3547,
+  },
+];

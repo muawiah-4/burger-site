@@ -1,0 +1,66 @@
+import { Review } from "@/types";
+
+export const reviews: Review[] = [
+  {
+    id: "r1",
+    name: "Jordan M.",
+    rating: 5,
+    text: "The Double Cheese Stack is unreal. Ordered on a Tuesday, thought about it every day since.",
+    initials: "JM",
+    item: "Double Cheese Stack",
+  },
+  {
+    id: "r2",
+    name: "Priya K.",
+    rating: 5,
+    text: "Finally a fast food app that doesn't feel like a chore. Ordering took under a minute.",
+    initials: "PK",
+  },
+  {
+    id: "r3",
+    name: "Diego R.",
+    rating: 4,
+    text: "BBQ Chicken Pizza slaps. Delivery was fast and everything showed up hot.",
+    initials: "DR",
+    item: "BBQ Chicken Pizza",
+  },
+  {
+    id: "r4",
+    name: "Amara T.",
+    rating: 5,
+    text: "Customizing my wings with the spice level slider is such a small thing but I love it.",
+    initials: "AT",
+    item: "Chicken Wings",
+  },
+  {
+    id: "r5",
+    name: "Liam C.",
+    rating: 5,
+    text: "Family Feast fed all four of us with leftovers. Genuinely good value.",
+    initials: "LC",
+    item: "Family Feast",
+  },
+  {
+    id: "r6",
+    name: "Sofia B.",
+    rating: 4,
+    text: "The Spicy Fire Burger actually brings the heat. Respect.",
+    initials: "SB",
+    item: "Spicy Fire Burger",
+  },
+  {
+    id: "r7",
+    name: "Marcus W.",
+    rating: 5,
+    text: "Pickup was ready exactly when the app said it would be. First time that's ever happened.",
+    initials: "MW",
+  },
+  {
+    id: "r8",
+    name: "Elena F.",
+    rating: 5,
+    text: "Cheesecake for dessert with a burger order? Say less. 10/10.",
+    initials: "EF",
+    item: "Cheesecake",
+  },
+];

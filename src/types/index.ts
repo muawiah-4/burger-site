@@ -1,0 +1,144 @@
+export type CategoryId =
+  | "burgers"
+  | "pizza"
+  | "chicken"
+  | "wraps"
+  | "sandwiches"
+  | "sides"
+  | "desserts"
+  | "drinks";
+
+export interface Category {
+  id: CategoryId;
+  name: string;
+  image: string;
+  description: string;
+}
+
+export type Badge = "best-seller" | "new" | "spicy" | "veggie";
+
+export interface OptionChoice {
+  id: string;
+  label: string;
+  priceDelta: number;
+  default?: boolean;
+}
+
+export interface OptionGroup {
+  id: string;
+  label: string;
+  type: "single" | "multi";
+  required?: boolean;
+  max?: number;
+  choices: OptionChoice[];
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  category: CategoryId;
+  description: string;
+  price: number;
+  image: string;
+  rating: number;
+  reviewCount: number;
+  ingredients: string[];
+  optionGroups: OptionGroup[];
+  badges?: Badge[];
+  isPopular?: boolean;
+  isSpicy?: boolean;
+  isVegetarian?: boolean;
+}
+
+export interface SelectedOption {
+  groupId: string;
+  groupLabel: string;
+  choiceIds: string[];
+  choiceLabels: string[];
+  priceDelta: number;
+}
+
+export interface CartItem {
+  cartItemId: string;
+  productId: string;
+  slug: string;
+  name: string;
+  image: string;
+  category: CategoryId;
+  basePrice: number;
+  unitPrice: number;
+  quantity: number;
+  selectedOptions: SelectedOption[];
+}
+
+export interface Deal {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  includes: string[];
+  image: string;
+  originalPrice: number;
+  price: number;
+  ctaLabel: string;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  address: string;
+  hours: string;
+  distanceMiles: number;
+  deliveryAvailable: boolean;
+  pickupEta: string;
+  lat: number;
+  lng: number;
+}
+
+export interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  initials: string;
+  item?: string;
+}
+
+export type FulfillmentMethod = "delivery" | "pickup";
+
+export interface CustomerInfo {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export interface DeliveryAddress {
+  line1: string;
+  line2: string;
+  city: string;
+  zip: string;
+  instructions: string;
+}
+
+export type PaymentMethod = "card" | "cash" | "wallet";
+
+export type OrderStatus = "preparing" | "cooking" | "on-the-way" | "delivered";
+
+export interface PlacedOrder {
+  id: string;
+  items: CartItem[];
+  fulfillment: FulfillmentMethod;
+  customer: CustomerInfo;
+  address?: DeliveryAddress;
+  pickupLocationId?: string;
+  payment: PaymentMethod;
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
+  tax: number;
+  total: number;
+  promoCode?: string;
+  placedAt: string;
+  estimatedMinutes: [number, number];
+}

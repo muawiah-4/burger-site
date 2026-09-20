@@ -1,0 +1,193 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { motion, useReducedMotion } from "motion/react";
+import { img } from "@/lib/data/images";
+import { deals } from "@/lib/data/deals";
+import { getProductsByCategory, productMap } from "@/lib/data/products";
+import { Product } from "@/types";
+import { formatPrice, uid, cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { useCart } from "@/context/cart-context";
+
+const SOFT_DRINK_IDS = ["dr-cola", "dr-diet-cola", "dr-lemonade", "dr-iced-tea", "dr-water"];
+const softDrinks = SOFT_DRINK_IDS.map((id) => productMap.get(id)).filter((p): p is Product => Boolean(p));
+
+const burgers = getProductsByCategory("burgers");
+const pizzas = getProductsByCategory("pizza");
+
+function PillGroup({
+  label,
+  items,
+  selectedId,
+  onSelect,
+}: {
+  label: string;
+  items: Product[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wide text-cream/50">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => {
+          const active = item.id === selectedId;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onSelect(item.id)}
+              aria-pressed={active}
+              className={cn(
+                "focus-ring rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
+                active
+                  ? "border-ember bg-ember text-cream"
+                  : "border-cream/15 bg-charcoal-raised text-cream hover:border-cream/30"
+              )}
+            >
+              {item.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ComboCard({
+  dealId,
+  badgeLabel,
+  heading,
+  itemLabel,
+  items,
+  extraInclude,
+  gallery,
+  category,
+  reverse,
+}: {
+  dealId: string;
+  badgeLabel: string;
+  heading: React.ReactNode;
+  itemLabel: string;
+  items: Product[];
+  extraInclude?: { groupId: string; groupLabel: string; label: string };
+  gallery: [string, string, string];
+  category: "burgers" | "pizza";
+  reverse?: boolean;
+}) {
+  const { addItem, openCart } = useCart();
+  const shouldReduceMotion = useReducedMotion();
+  const deal = deals.find((d) => d.id === dealId);
+
+  const [itemId, setItemId] = useState(items[0].id);
+  const [drinkId, setDrinkId] = useState(softDrinks[0].id);
+
+  const selectedItem = productMap.get(itemId);
+  const selectedDrink = productMap.get(drinkId);
+
+  if (!deal || !selectedItem || !selectedDrink) return null;
+
+  function buildCombo() {
+    if (!deal || !selectedItem || !selectedDrink) return;
+    const options = [
+      { groupId: "main", groupLabel: itemLabel, choiceIds: [itemId], choiceLabels: [selectedItem.name], priceDelta: 0 },
+      ...(extraInclude
+        ? [{ groupId: extraInclude.groupId, groupLabel: extraInclude.groupLabel, choiceIds: [uid("inc")], choiceLabels: [extraInclude.label], priceDelta: 0 }]
+        : []),
+      { groupId: "drink", groupLabel: "Drink", choiceIds: [drinkId], choiceLabels: [selectedDrink.name], priceDelta: 0 },
+    ];
+
+    addItem({
+      productId: `deal-${deal.id}`,
+      slug: deal.slug,
+      name: deal.name,
+      image: selectedItem.image,
+      category,
+      basePrice: deal.price,
+      unitPrice: deal.price,
+      quantity: 1,
+      selectedOptions: options,
+    });
+    openCart();
+  }
+
+  return (
+    <div className="grid grid-cols-1 items-center gap-10 rounded-[2.5rem] border border-cream/10 bg-charcoal-soft p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-4">
+      <motion.div
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: reverse ? 20 : -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: shouldReduceMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className={cn(reverse ? "lg:order-2" : "order-2 lg:order-1")}
+      >
+        <span className="inline-block rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase tracking-wide text-charcoal">
+          {badgeLabel}
+        </span>
+        <h2 className="mt-4 font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-cream sm:text-5xl">
+          {heading}
+        </h2>
+        <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream/60">{deal.description}</p>
+
+        <div className="mt-6 flex flex-col gap-5">
+          <PillGroup label={`Choose your ${itemLabel.toLowerCase()}`} items={items} selectedId={itemId} onSelect={setItemId} />
+          <PillGroup label="Choose your soft drink" items={softDrinks} selectedId={drinkId} onSelect={setDrinkId} />
+        </div>
+
+        <div className="mt-6 flex items-end gap-2">
+          <span className="font-display text-3xl font-extrabold text-cream">{formatPrice(deal.price)}</span>
+          <span className="pb-1 text-base text-cream/60 line-through">{formatPrice(deal.originalPrice)}</span>
+        </div>
+        <Button variant="primary" size="lg" className="mt-6" onClick={buildCombo}>
+          {deal.ctaLabel}
+        </Button>
+      </motion.div>
+
+      <motion.div
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: shouldReduceMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className={cn("grid grid-cols-2 gap-3", reverse ? "lg:order-1" : "order-1 lg:order-2")}
+      >
+        <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">
+          <Image src={gallery[0]} alt={selectedItem.name} fill sizes="50vw" className="object-cover" />
+        </div>
+        <div className="relative aspect-square overflow-hidden rounded-3xl">
+          <Image src={gallery[1]} alt="Side" fill sizes="25vw" className="object-cover" />
+        </div>
+        <div className="relative aspect-square overflow-hidden rounded-3xl">
+          <Image src={gallery[2]} alt={selectedDrink.name} fill sizes="25vw" className="object-cover" />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+export function ComboSection() {
+  return (
+    <section className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-20 sm:px-8 sm:py-28">
+      <ComboCard
+        dealId="deal-burger-fries-drink"
+        badgeLabel="Best Value"
+        heading={<>MAKE IT<br />A COMBO.</>}
+        itemLabel="Burger"
+        items={burgers}
+        extraInclude={{ groupId: "side", groupLabel: "Side", label: "Classic Fries" }}
+        gallery={[img.editorialBeef, img.friesClassic, img.drinkMilkshake]}
+        category="burgers"
+      />
+      <ComboCard
+        dealId="deal-pizza-drink"
+        badgeLabel="Stone-Baked"
+        heading={<>PIZZA,<br />YOUR WAY.</>}
+        itemLabel="Pizza"
+        items={pizzas}
+        gallery={[img.pizzaSupreme, img.pizzaMargherita, img.drinkCola]}
+        category="pizza"
+        reverse
+      />
+    </section>
+  );
+}

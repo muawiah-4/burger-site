@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  --color-charcoal: #171310;
+  --color-charcoal-soft: #241e19;
+  --color-charcoal-raised: #2f271e;
+  --color-cream: #edefdb;
+  --color-cream-soft: #e2e5c7;
+  --color-white: #edefdb;
+  --color-ember: #e3401f;
+  --color-ember-dark: #b52e14;
+  --color-gold: #f4ab27;
+  --color-gold-soft: #fbd28a;
+  --color-basil: #2b4636;
+  --color-basil-soft: #e7ede3;
+
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-charcoal: var(--color-charcoal);
+  --color-charcoal-soft: var(--color-charcoal-soft);
+  --color-charcoal-raised: var(--color-charcoal-raised);
+  --color-cream: var(--color-cream);
+  --color-cream-soft: var(--color-cream-soft);
+  --color-white: var(--color-white);
+  --color-ember: var(--color-ember);
+  --color-ember-dark: var(--color-ember-dark);
+  --color-gold: var(--color-gold);
+  --color-gold-soft: var(--color-gold-soft);
+  --color-basil: var(--color-basil);
+  --color-basil-soft: var(--color-basil-soft);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-marquee: marquee 28s linear infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+* {
+  scrollbar-color: var(--color-ember) var(--color-charcoal);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background-color: var(--color-charcoal);
+  background-image: radial-gradient(ellipse 70% 45% at 12% -8%, rgba(227, 64, 31, 0.1), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 100% 8%, rgba(244, 171, 39, 0.08), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 50% 100%, rgba(237, 239, 219, 0.03), transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-ember);
+  color: var(--color-cream);
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-ember);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Hide scrollbar for horizontal snap rows, keep it scrollable */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
