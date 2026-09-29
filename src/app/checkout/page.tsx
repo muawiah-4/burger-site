@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
 import { generateOrderId, saveOrder } from "@/lib/orders";
+import { formatPrice } from "@/lib/utils";
 import {
   isValidCardNumber,
   isValidCvc,
@@ -35,6 +36,10 @@ export default function CheckoutPage() {
   const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
+  // Guards against a second click landing before React re-renders with placing=true.
+  const placingRef = useRef(false);
+  // Snapshot of the total at submit time: clearCart() zeroes cart.totals while we navigate away.
+  const [placedTotal, setPlacedTotal] = useState<number | null>(null);
 
   const [customer, setCustomer] = useState<CustomerInfo>(EMPTY_CUSTOMER);
   const [address, setAddress] = useState<DeliveryAddress>(EMPTY_ADDRESS);
@@ -106,7 +111,10 @@ export default function CheckoutPage() {
   }
 
   function placeOrder() {
+    if (placing || placingRef.current || cart.items.length === 0) return;
+    placingRef.current = true;
     setPlacing(true);
+    setPlacedTotal(cart.totals.total);
     const id = generateOrderId();
     const estimatedMinutes: [number, number] = cart.fulfillment === "delivery" ? [25, 35] : [12, 18];
     const order: PlacedOrder = {
@@ -205,8 +213,8 @@ export default function CheckoutPage() {
                 Continue
               </Button>
             ) : (
-              <Button variant="primary" size="lg" onClick={placeOrder}>
-                Place Order · {cart.totals.total.toFixed(2) !== "0.00" ? `$${cart.totals.total.toFixed(2)}` : ""}
+              <Button variant="primary" size="lg" onClick={placeOrder} disabled={placing}>
+                Place Order · {formatPrice(placedTotal ?? cart.totals.total)}
               </Button>
             )}
           </div>
