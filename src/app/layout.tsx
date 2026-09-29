@@ -11,6 +11,7 @@ import { Mascot } from "@/components/layout/Mascot";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { ProductModal } from "@/components/product/ProductModal";
 import { AccountModal } from "@/components/account/AccountModal";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -34,21 +35,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${jakarta.variable} ${inter.variable} antialiased`}>
-        <CartProvider>
-          <FlyToCartProvider>
-            <ProductModalProvider>
-              <AccountModalProvider>
-                <Navbar />
-                <main>{children}</main>
-                <Footer />
-                <CartDrawer />
-                <ProductModal />
-                <AccountModal />
-                <Mascot />
-              </AccountModalProvider>
-            </ProductModalProvider>
-          </FlyToCartProvider>
-        </CartProvider>
+        <MotionProvider>
+          <CartProvider>
+            <FlyToCartProvider>
+              <ProductModalProvider>
+                <AccountModalProvider>
+                  <Navbar />
+                  <main>{children}</main>
+                  <Footer />
+                  <CartDrawer />
+                  <ProductModal />
+                  <AccountModal />
+                  <Mascot />
+                </AccountModalProvider>
+              </ProductModalProvider>
+            </FlyToCartProvider>
+          </CartProvider>
+        </MotionProvider>
       </body>
     </html>
   );

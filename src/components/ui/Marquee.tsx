@@ -1,9 +1,6 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
-
 export function Marquee({ items }: { items: string[] }) {
-  const shouldReduceMotion = useReducedMotion();
   const content = (
     <>
       {items.map((item, i) => (
@@ -19,18 +16,15 @@ export function Marquee({ items }: { items: string[] }) {
 
   return (
     <div className="overflow-hidden bg-gold py-3" role="marquee" aria-label="Ember brand promise">
-      <div
-        className={shouldReduceMotion ? "flex flex-nowrap" : "flex w-max flex-nowrap animate-marquee"}
-        style={shouldReduceMotion ? { flexWrap: "wrap" } : undefined}
-      >
-        <div className="flex shrink-0 font-display text-xs font-bold uppercase tracking-widest text-charcoal">
+      {/* Both copies always render (server and client agree); reduced motion is handled in CSS:
+          no animation, the duplicate is hidden and the items wrap instead of scrolling. */}
+      <div className="flex w-max flex-nowrap motion-safe:animate-marquee motion-reduce:w-auto">
+        <div className="flex shrink-0 font-display text-xs font-bold uppercase tracking-widest text-charcoal motion-reduce:shrink motion-reduce:flex-wrap">
           {content}
         </div>
-        {!shouldReduceMotion && (
-          <div aria-hidden="true" className="flex shrink-0 font-display text-xs font-bold uppercase tracking-widest text-charcoal">
-            {content}
-          </div>
-        )}
+        <div aria-hidden="true" className="flex shrink-0 font-display text-xs font-bold uppercase tracking-widest text-charcoal motion-reduce:hidden">
+          {content}
+        </div>
       </div>
     </div>
   );

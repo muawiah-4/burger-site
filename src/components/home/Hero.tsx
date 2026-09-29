@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, type Transition } from "motion/react";
+import { motion, type Transition } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { HeroVideo } from "@/components/home/HeroVideo";
@@ -8,15 +8,11 @@ import { HeroVideo } from "@/components/home/HeroVideo";
 const easeOut: Transition["ease"] = [0.22, 1, 0.36, 1];
 
 export function Hero() {
-  const shouldReduceMotion = useReducedMotion();
-
   function fadeUpTransition(i: number): Transition {
-    return shouldReduceMotion
-      ? { duration: 0.2 }
-      : { duration: 0.6, delay: i * 0.08, ease: easeOut };
+    return { duration: 0.6, delay: i * 0.08, ease: easeOut };
   }
-  const fadeUpInitial = shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 };
-  const fadeUpAnimate = shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 };
+  const fadeUpInitial = { opacity: 0, y: 24 };
+  const fadeUpAnimate = { opacity: 1, y: 0 };
 
   return (
     <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-charcoal pb-16 pt-28 sm:min-h-[88vh] sm:pb-20 sm:pt-36">

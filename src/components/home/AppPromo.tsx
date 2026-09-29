@@ -53,10 +53,10 @@ export function AppPromo() {
             </div>
 
             <motion.div
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: shouldReduceMotion ? 0.2 : 0.5 }}
+              transition={{ duration: 0.5 }}
               className="relative mx-auto"
             >
               {/* Ambient glow bleeding behind the phone */}
@@ -84,6 +84,9 @@ export function AppPromo() {
                     <motion.span
                       aria-hidden="true"
                       className="absolute h-20 w-20 rounded-full bg-ember blur-2xl"
+                      // Fixed initial keeps the server and client markup identical; the
+                      // reduced-motion branch below only affects the (client-side) animation.
+                      initial={{ opacity: 0.55, scale: 1 }}
                       animate={
                         shouldReduceMotion
                           ? { opacity: 0.55 }

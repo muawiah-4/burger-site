@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { img } from "@/lib/data/images";
 import { deals } from "@/lib/data/deals";
 import { getProductsByCategory, productMap } from "@/lib/data/products";
@@ -78,7 +78,6 @@ function ComboCard({
   reverse?: boolean;
 }) {
   const { addItem, openCart } = useCart();
-  const shouldReduceMotion = useReducedMotion();
   const deal = deals.find((d) => d.id === dealId);
 
   const [itemId, setItemId] = useState(items[0].id);
@@ -116,10 +115,10 @@ function ComboCard({
   return (
     <div className="grid grid-cols-1 items-center gap-10 rounded-[2.5rem] border border-cream/10 bg-charcoal-soft p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-4">
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: reverse ? 20 : -20 }}
+        initial={{ opacity: 0, x: reverse ? 20 : -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: shouldReduceMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(reverse ? "lg:order-2" : "order-2 lg:order-1")}
       >
         <span className="inline-block rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase tracking-wide text-charcoal">
@@ -145,10 +144,10 @@ function ComboCard({
       </motion.div>
 
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: shouldReduceMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn("grid grid-cols-2 gap-3", reverse ? "lg:order-1" : "order-1 lg:order-2")}
       >
         <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">

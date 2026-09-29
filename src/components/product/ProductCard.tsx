@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
@@ -19,7 +19,6 @@ export function ProductCard({
   index?: number;
 }) {
   const { open } = useProductModal();
-  const shouldReduceMotion = useReducedMotion();
   const primaryBadge = product.badges?.[0];
 
   return (
@@ -27,12 +26,12 @@ export function ProductCard({
       layout
       type="button"
       onClick={() => open(product)}
-      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{
-        duration: shouldReduceMotion ? 0.2 : 0.35,
-        delay: shouldReduceMotion ? 0 : (index % 4) * 0.05,
+        duration: 0.35,
+        delay: (index % 4) * 0.05,
         ease: [0.22, 1, 0.36, 1],
       }}
       className="focus-ring group flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised text-left transition-all hover:-translate-y-0.5 hover:border-cream/25 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]"

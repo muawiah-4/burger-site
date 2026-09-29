@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { categories } from "@/lib/data/categories";
 import { getProductsByCategory } from "@/lib/data/products";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function CategoryGrid() {
-  const shouldReduceMotion = useReducedMotion();
   return (
     <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="categories">
       <SectionHeading label="Browse" title="Popular Categories" />
@@ -19,12 +18,12 @@ export function CategoryGrid() {
           return (
             <motion.div
               key={cat.id}
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{
-                duration: shouldReduceMotion ? 0.2 : 0.4,
-                delay: shouldReduceMotion ? 0 : (i % 4) * 0.06,
+                duration: 0.4,
+                delay: (i % 4) * 0.06,
                 ease: [0.22, 1, 0.36, 1],
               }}
             >

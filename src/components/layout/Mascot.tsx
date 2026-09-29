@@ -119,7 +119,7 @@ export function Mascot() {
         onClick={handleClick}
         aria-label="Ember's mascot — click for a tip"
         className="focus-ring relative flex h-16 w-16 items-center justify-center rounded-full"
-        animate={shouldReduceMotion ? undefined : { y: [0, -6, 0] }}
+        animate={{ y: [0, -6, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
         whileTap={{ scale: 0.92 }}
       >

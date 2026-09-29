@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { deals } from "@/lib/data/deals";
 import { formatPrice } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -11,7 +11,6 @@ import { uid } from "@/lib/utils";
 
 export function DealsSection() {
   const { addItem, openCart } = useCart();
-  const shouldReduceMotion = useReducedMotion();
 
   function addDeal(dealId: string) {
     const deal = deals.find((d) => d.id === dealId);
@@ -42,12 +41,12 @@ export function DealsSection() {
             return (
               <motion.div
                 key={deal.id}
-                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{
-                  duration: shouldReduceMotion ? 0.2 : 0.4,
-                  delay: shouldReduceMotion ? 0 : (i % 3) * 0.08,
+                  duration: 0.4,
+                  delay: (i % 3) * 0.08,
                 }}
                 className="flex flex-col overflow-hidden rounded-3xl bg-charcoal-soft ring-1 ring-cream/5"
               >

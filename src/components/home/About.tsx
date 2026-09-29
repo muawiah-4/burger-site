@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { LoopingVideo } from "@/components/ui/LoopingVideo";
 
 const stats = [
@@ -10,15 +10,14 @@ const stats = [
 ];
 
 export function About() {
-  const shouldReduceMotion = useReducedMotion();
   return (
     <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="about">
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: shouldReduceMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem]"
         >
           <LoopingVideo src="/videos/about-prep.mp4" ariaLabel="A cook placing a fresh beef patty into a hot cast-iron pan" />

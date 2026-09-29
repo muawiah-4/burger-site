@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { UtensilsCrossed, Settings2, Sparkles } from "lucide-react";
 
 const steps = [
@@ -10,7 +10,6 @@ const steps = [
 ];
 
 export function HowItWorks() {
-  const shouldReduceMotion = useReducedMotion();
   return (
     <section className="relative overflow-hidden bg-basil py-20 sm:py-28">
       <div
@@ -35,10 +34,10 @@ export function HowItWorks() {
             return (
               <motion.div
                 key={step.number}
-                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: shouldReduceMotion ? 0.2 : 0.4, delay: shouldReduceMotion ? 0 : i * 0.1 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
                 className="flex flex-col items-center text-center"
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cream/10 text-gold">

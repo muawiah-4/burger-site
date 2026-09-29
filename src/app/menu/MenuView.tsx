@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Search, X, Flame, TrendingUp, Leaf } from "lucide-react";
 import Image from "next/image";
 import { products } from "@/lib/data/products";
@@ -36,7 +36,6 @@ export function MenuView() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { addItem, openCart } = useCart();
-  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
@@ -174,11 +173,11 @@ export function MenuView() {
                 <motion.div
                   key={deal.id}
                   layout
-                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: shouldReduceMotion ? 0.2 : 0.35,
-                    delay: shouldReduceMotion ? 0 : (i % 3) * 0.06,
+                    duration: 0.35,
+                    delay: (i % 3) * 0.06,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised"
