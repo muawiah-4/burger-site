@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { getImageProps } from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 
 interface Flight {
@@ -53,7 +54,7 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = target.getBoundingClientRect();
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      setFlights((prev) => [...prev, { id, imgSrc, fromRect, toRect }]);
+      setFlights((prev) => [...prev, { id, imgSrc: flightImageSrc(fromEl, imgSrc, fromRect.width), fromRect, toRect }]);
     },
     [shouldReduceMotion]
   );
@@ -73,6 +74,18 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
       </div>
     </FlyToCartContext.Provider>
   );
+}
+
+/**
+ * Remote photos must go through the /_next/image optimizer: the CSP only allows
+ * same-origin images. Reuse the modal's already-loaded optimized URL when there is
+ * one (it's cached, so the flight starts instantly), else build one.
+ */
+function flightImageSrc(fromEl: HTMLElement, src: string, width: number): string {
+  const rendered = fromEl.querySelector("img")?.currentSrc;
+  if (rendered && new URL(rendered, window.location.href).origin === window.location.origin) return rendered;
+  const size = Math.max(64, Math.round(width));
+  return getImageProps({ src, alt: "", width: size, height: size, sizes: `${size}px` }).props.src;
 }
 
 function FlightImage({ flight, onDone }: { flight: Flight; onDone: () => void }) {
