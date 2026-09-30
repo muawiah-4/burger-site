@@ -13,6 +13,10 @@ export function Hero() {
   }
   const fadeUpInitial = { opacity: 0, y: 24 };
   const fadeUpAnimate = { opacity: 1, y: 0 };
+  // The H1 and CTAs are server-rendered, so they must be visible at first paint
+  // (before hydration): animate position only, never start them at opacity 0.
+  const slideUpInitial = { y: 24 };
+  const slideUpAnimate = { y: 0 };
 
   return (
     <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-charcoal pb-16 pt-28 sm:min-h-[88vh] sm:pb-20 sm:pt-36">
@@ -34,8 +38,8 @@ export function Hero() {
             Crafted for Cravings
           </motion.p>
           <motion.h1
-            initial={fadeUpInitial}
-            animate={fadeUpAnimate}
+            initial={slideUpInitial}
+            animate={slideUpAnimate}
             transition={fadeUpTransition(1)}
             className="font-display text-[13vw] font-extrabold leading-[0.95] tracking-tight text-cream sm:text-6xl lg:text-7xl"
           >
@@ -53,8 +57,8 @@ export function Hero() {
             asking for.
           </motion.p>
           <motion.div
-            initial={fadeUpInitial}
-            animate={fadeUpAnimate}
+            initial={slideUpInitial}
+            animate={slideUpAnimate}
             transition={fadeUpTransition(3)}
             className="mt-8 flex flex-wrap items-center gap-4"
           >
