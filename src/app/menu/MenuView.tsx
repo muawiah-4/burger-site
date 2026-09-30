@@ -213,7 +213,7 @@ export function MenuView() {
           <ProductGrid products={[]} emptyMessage="Try a different search or clear your filters." />
         ) : (
           <div className="flex flex-col gap-14">
-            {sections.map(({ cat, items }) => (
+            {sections.map(({ cat, items }, sectionIndex) => (
               <section key={cat.id} aria-labelledby={`menu-heading-${cat.id}`}>
                 <div className="mb-5 flex items-baseline justify-between border-b border-cream/10 pb-3">
                   <h2
@@ -226,7 +226,8 @@ export function MenuView() {
                     {items.length} {items.length === 1 ? "item" : "items"}
                   </span>
                 </div>
-                <ProductGrid products={items} />
+                {/* Only the first section is above the fold on load. */}
+                <ProductGrid products={items} preloadCount={sectionIndex === 0 ? 4 : 0} />
               </section>
             ))}
           </div>

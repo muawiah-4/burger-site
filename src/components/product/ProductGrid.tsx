@@ -7,9 +7,12 @@ import { ProductCard } from "./ProductCard";
 export function ProductGrid({
   products,
   emptyMessage = "No items match your search.",
+  preloadCount = 0,
 }: {
   products: Product[];
   emptyMessage?: string;
+  /** How many leading card images to preload — only for above-the-fold grids (the /menu page). */
+  preloadCount?: number;
 }) {
   if (products.length === 0) {
     return (
@@ -27,7 +30,7 @@ export function ProductGrid({
     >
       <AnimatePresence mode="popLayout">
         {products.map((product, i) => (
-          <ProductCard key={product.id} product={product} priority={i < 4} index={i} />
+          <ProductCard key={product.id} product={product} preload={i < preloadCount} index={i} />
         ))}
       </AnimatePresence>
     </motion.div>

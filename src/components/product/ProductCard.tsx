@@ -11,11 +11,12 @@ import { useProductModal } from "@/context/product-modal-context";
 
 export function ProductCard({
   product,
-  priority = false,
+  preload = false,
   index = 0,
 }: {
   product: Product;
-  priority?: boolean;
+  /** Preload the image in <head> (Next 16 replacement for the deprecated `priority`). */
+  preload?: boolean;
   index?: number;
 }) {
   const { open } = useProductModal();
@@ -44,7 +45,7 @@ export function ProductCard({
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-          priority={priority}
+          preload={preload}
         />
         {primaryBadge && (
           <div className="absolute left-3 top-3">

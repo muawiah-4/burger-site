@@ -136,7 +136,7 @@ function ProductModalPanel({
           fill
           sizes="(max-width: 640px) 100vw, 35vw"
           className="object-cover"
-          priority
+          loading="eager"
         />
         {product.badges && product.badges.length > 0 && (
           <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
