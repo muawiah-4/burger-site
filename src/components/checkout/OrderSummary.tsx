@@ -3,13 +3,23 @@ import { CartItem } from "@/types";
 import { Totals } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 
-export function OrderSummary({ items, totals }: { items: CartItem[]; totals: Totals }) {
+export function OrderSummary({
+  items,
+  totals,
+  showItems = true,
+}: {
+  items: CartItem[];
+  totals: Totals;
+  /** Hide the line items when they're already listed nearby (the Review step). */
+  showItems?: boolean;
+}) {
   return (
     <div className="rounded-3xl border border-cream/10 bg-charcoal-raised p-5">
       <h2 className="font-display text-sm font-bold uppercase tracking-wide text-cream/60">
         Order Summary
       </h2>
-      <ul className="mt-4 flex flex-col gap-3 max-h-64 overflow-y-auto">
+      {showItems && (
+      <ul className="mt-4 flex max-h-64 flex-col gap-3 overflow-y-auto">
         {items.map((item) => (
           <li key={item.cartItemId} className="flex gap-3">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-charcoal-soft">
@@ -33,7 +43,12 @@ export function OrderSummary({ items, totals }: { items: CartItem[]; totals: Tot
           </li>
         ))}
       </ul>
-      <div className="mt-4 flex flex-col gap-1.5 border-t border-cream/10 pt-4 text-sm">
+      )}
+      <div
+        className={
+          showItems ? "mt-4 flex flex-col gap-1.5 border-t border-cream/10 pt-4 text-sm" : "mt-4 flex flex-col gap-1.5 text-sm"
+        }
+      >
         <Row label="Subtotal" value={formatPrice(totals.subtotal)} />
         <Row label="Delivery fee" value={totals.deliveryFee === 0 ? "Free" : formatPrice(totals.deliveryFee)} />
         {totals.discount > 0 && <Row label="Discount" value={`-${formatPrice(totals.discount)}`} accent />}

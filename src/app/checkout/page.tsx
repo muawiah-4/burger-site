@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -75,6 +75,23 @@ export default function CheckoutPage() {
   const [cardErrors, setCardErrors] = useState<Partial<Record<keyof CardDetails, string>>>({});
   // Set after a failed Continue; focused once the errors have rendered so AT reads them with the field.
   const [focusRequest, setFocusRequest] = useState<{ id: string } | null>(null);
+  // Each step panel remounts (keyed by step). On every mount after the first, move
+  // focus to its heading so keyboard/AT users aren't left on a removed button.
+  const stepPanelMounted = useRef(false);
+  const stepPanelRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    if (!stepPanelMounted.current) {
+      stepPanelMounted.current = true;
+      return;
+    }
+    const heading = el.querySelector("h2");
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.classList.add("outline-none");
+    heading.focus({ preventScroll: true });
+  }, []);
+  // True after "Edit" on the Review step: Continue then returns to Review once valid.
+  const [editingFromReview, setEditingFromReview] = useState(false);
 
   useEffect(() => {
     if (!focusRequest) return;
@@ -110,58 +127,99 @@ export default function CheckoutPage() {
     }
   }, [cart.hydrated, cart.items.length, placing, router]);
 
-  function validateCustomer(): boolean {
+  function customerErrorsFor(): Partial<Record<keyof CustomerInfo, string>> {
     const errors: Partial<Record<keyof CustomerInfo, string>> = {};
     if (!isValidName(customer.name)) errors.name = "Enter your full name.";
     if (!isValidPhone(customer.phone)) errors.phone = "Enter a valid phone number.";
     if (!isValidEmail(customer.email)) errors.email = "Enter a valid email address.";
-    setCustomerErrors(errors);
-    const invalid = firstInvalidId(errors, CUSTOMER_FIELD_IDS);
-    if (invalid) setFocusRequest({ id: invalid });
-    return !invalid;
+    return errors;
   }
 
-  function validateAddress(): boolean {
+  function addressErrorsFor(): Partial<Record<keyof DeliveryAddress, string>> {
     if (cart.fulfillment === "pickup") {
-      const ok = !!cart.pickupLocationId;
-      setAddressErrors(ok ? {} : { line1: "Choose a pickup location to continue." });
-      if (!ok) setFocusRequest({ id: "checkout-pickup-first" });
-      return ok;
+      return cart.pickupLocationId ? {} : { line1: "Choose a pickup location to continue." };
     }
     const errors: Partial<Record<keyof DeliveryAddress, string>> = {};
     if (!address.line1.trim()) errors.line1 = "Street address is required.";
     if (!address.city.trim()) errors.city = "City is required.";
     if (!isValidZip(address.zip)) errors.zip = "Enter a valid ZIP code.";
-    setAddressErrors(errors);
-    const invalid = firstInvalidId(errors, ADDRESS_FIELD_IDS);
-    if (invalid) setFocusRequest({ id: invalid });
-    return !invalid;
+    return errors;
   }
 
-  function validatePayment(): boolean {
-    if (payment !== "card") return true;
+  function cardErrorsFor(): Partial<Record<keyof CardDetails, string>> {
+    if (payment !== "card") return {};
     const errors: Partial<Record<keyof CardDetails, string>> = {};
     if (!isValidName(card.name)) errors.name = "Enter the name on your card.";
     if (!isValidCardNumber(card.number)) errors.number = "Enter a valid card number.";
     if (!isValidExpiry(card.expiry)) errors.expiry = "Enter a valid, unexpired date (MM/YY).";
     if (!isValidCvc(card.cvc)) errors.cvc = "Enter a valid CVC.";
-    setCardErrors(errors);
-    const invalid = firstInvalidId(errors, CARD_FIELD_IDS);
-    if (invalid) setFocusRequest({ id: invalid });
-    return !invalid;
+    return errors;
+  }
+
+  const hasErrors = (errors: object) => Object.keys(errors).length > 0;
+
+  /** Is a step complete? Pure — used to decide where an edit from Review should land. */
+  function stepIsValid(n: number) {
+    if (n === 2) return !hasErrors(customerErrorsFor());
+    if (n === 3) return !hasErrors(addressErrorsFor());
+    if (n === 4) return !hasErrors(cardErrorsFor());
+    return true;
+  }
+
+  /** Validates the current step, showing its errors and focusing the first invalid field. */
+  function validateStep(n: number): boolean {
+    if (n === 2) {
+      const errors = customerErrorsFor();
+      setCustomerErrors(errors);
+      const invalid = firstInvalidId(errors, CUSTOMER_FIELD_IDS);
+      if (invalid) setFocusRequest({ id: invalid });
+      return !invalid;
+    }
+    if (n === 3) {
+      const errors = addressErrorsFor();
+      setAddressErrors(errors);
+      if (!hasErrors(errors)) return true;
+      setFocusRequest({
+        id: cart.fulfillment === "pickup" ? "checkout-pickup-first" : firstInvalidId(errors, ADDRESS_FIELD_IDS)!,
+      });
+      return false;
+    }
+    if (n === 4) {
+      const errors = cardErrorsFor();
+      setCardErrors(errors);
+      const invalid = firstInvalidId(errors, CARD_FIELD_IDS);
+      if (invalid) setFocusRequest({ id: invalid });
+      return !invalid;
+    }
+    return true;
+  }
+
+  function goToStep(n: number) {
+    setStep(n);
+    if (n === 5) setEditingFromReview(false);
+    window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
   }
 
   function goNext() {
-    if (step === 2 && !validateCustomer()) return;
-    if (step === 3 && !validateAddress()) return;
-    if (step === 4 && !validatePayment()) return;
-    setStep((s) => Math.min(s + 1, 5));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!validateStep(step)) return;
+    if (editingFromReview) {
+      // Return straight to Review unless the edit made a later step incomplete
+      // (e.g. switching to pickup with no location chosen yet).
+      for (let n = step + 1; n < 5; n++) {
+        if (!stepIsValid(n)) return goToStep(n);
+      }
+      return goToStep(5);
+    }
+    goToStep(Math.min(step + 1, 5));
+  }
+
+  function editFromReview(n: number) {
+    setEditingFromReview(true);
+    goToStep(n);
   }
 
   function goBack() {
-    setStep((s) => Math.max(s - 1, 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    goToStep(Math.max(step - 1, 1));
   }
 
   function placeOrder() {
@@ -211,6 +269,7 @@ export default function CheckoutPage() {
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step}
+              ref={stepPanelRef}
               initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
@@ -243,13 +302,29 @@ export default function CheckoutPage() {
                   address={address}
                   pickupLocationId={cart.pickupLocationId}
                   payment={payment}
-                  onEditStep={setStep}
+                  items={cart.items}
+                  onEditStep={editFromReview}
+                  onEditItems={cart.openCart}
                 />
               )}
             </motion.div>
           </AnimatePresence>
 
-          <div className="mt-8 flex items-center justify-between gap-3">
+          {step === 5 && (
+            // On phones the sidebar summary sits below this card, i.e. after
+            // Place Order — show the totals here instead, right above the button.
+            <div className="mt-6 lg:hidden">
+              <OrderSummary items={cart.items} totals={cart.totals} showItems={false} />
+            </div>
+          )}
+
+          <div
+            className={
+              step === 5
+                ? "mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between"
+                : "mt-8 flex items-center justify-between gap-3"
+            }
+          >
             <Button
               variant="outline"
               size="md"
@@ -267,17 +342,17 @@ export default function CheckoutPage() {
                 icon={<ArrowRight size={16} />}
                 iconPosition="right"
               >
-                Continue
+                {editingFromReview ? "Save & Review" : "Continue"}
               </Button>
             ) : (
-              <Button variant="primary" size="lg" onClick={placeOrder} disabled={placing}>
+              <Button variant="primary" size="lg" onClick={placeOrder} disabled={placing} className="w-full sm:w-auto">
                 Place Order · {formatPrice(placedTotal ?? cart.totals.total)}
               </Button>
             )}
           </div>
         </div>
 
-        <div className="lg:order-2">
+        <div className={step === 5 ? "hidden lg:order-2 lg:block" : "lg:order-2"}>
           <OrderSummary items={cart.items} totals={cart.totals} />
         </div>
       </div>
