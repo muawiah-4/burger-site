@@ -19,13 +19,8 @@ export function CartDrawer() {
     updateQuantity,
     totals,
     promoCode,
-    promoMessage,
-    promoValid,
-    applyPromo,
-    clearPromo,
   } = useCart();
   const shouldReduceMotion = useReducedMotion();
-  const [promoInput, setPromoInput] = useState(promoCode);
 
   return (
     <AnimatePresence>
@@ -115,39 +110,9 @@ export function CartDrawer() {
                 </div>
 
                 <div className="border-t border-cream/10 p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/60" />
-                      <input
-                        value={promoInput}
-                        onChange={(e) => setPromoInput(e.target.value)}
-                        placeholder="ENTER PROMO CODE"
-                        className="focus-ring w-full rounded-full border border-cream/15 bg-charcoal-raised py-2.5 pl-9 pr-3 text-xs font-semibold uppercase tracking-wide text-cream placeholder:text-cream/60"
-                        aria-label="Promo code"
-                      />
-                    </div>
-                    <Button size="sm" variant="secondary" onClick={() => applyPromo(promoInput)}>
-                      Apply
-                    </Button>
-                  </div>
-                  {promoMessage && (
-                    <p className={cnMsg(promoValid)}>
-                      {promoValid ? "✓ " : ""}
-                      {promoMessage}
-                      {promoValid && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            clearPromo();
-                            setPromoInput("");
-                          }}
-                          className="focus-ring ml-2 underline"
-                        >
-                          remove
-                        </button>
-                      )}
-                    </p>
-                  )}
+                  {/* Remount when the stored code changes (hydration from storage, apply, clear)
+                      so the input always starts from the current value. */}
+                  <PromoForm key={promoCode} />
 
                   <div className="mt-3 flex flex-col gap-1.5 text-sm">
                     <Row label="Subtotal" value={formatPrice(totals.subtotal)} />
@@ -184,6 +149,46 @@ export function CartDrawer() {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function PromoForm() {
+  const { promoCode, promoMessage, promoValid, applyPromo, clearPromo } = useCart();
+  const [promoInput, setPromoInput] = useState(promoCode);
+
+  return (
+    <>
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/60" />
+          <input
+            value={promoInput}
+            onChange={(e) => setPromoInput(e.target.value)}
+            placeholder="ENTER PROMO CODE"
+            className="focus-ring w-full rounded-full border border-cream/15 bg-charcoal-raised py-2.5 pl-9 pr-3 text-xs font-semibold uppercase tracking-wide text-cream placeholder:text-cream/60"
+            aria-label="Promo code"
+          />
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => applyPromo(promoInput)}>
+          Apply
+        </Button>
+      </div>
+      {promoMessage && (
+        <p className={cnMsg(promoValid)}>
+          {promoValid ? "✓ " : ""}
+          {promoMessage}
+          {promoValid && (
+            <button
+              type="button"
+              onClick={clearPromo}
+              className="focus-ring ml-2 underline"
+            >
+              remove
+            </button>
+          )}
+        </p>
+      )}
+    </>
   );
 }
 
