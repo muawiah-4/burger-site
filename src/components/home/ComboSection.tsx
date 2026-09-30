@@ -7,7 +7,8 @@ import { img } from "@/lib/data/images";
 import { deals } from "@/lib/data/deals";
 import { getProductsByCategory, productMap } from "@/lib/data/products";
 import { Product } from "@/types";
-import { formatPrice, uid, cn } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
+import { DEAL_PRODUCT_PREFIX } from "@/lib/cart";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/cart-context";
 
@@ -93,13 +94,13 @@ function ComboCard({
     const options = [
       { groupId: "main", groupLabel: itemLabel, choiceIds: [itemId], choiceLabels: [selectedItem.name], priceDelta: 0 },
       ...(extraInclude
-        ? [{ groupId: extraInclude.groupId, groupLabel: extraInclude.groupLabel, choiceIds: [uid("inc")], choiceLabels: [extraInclude.label], priceDelta: 0 }]
+        ? [{ groupId: extraInclude.groupId, groupLabel: extraInclude.groupLabel, choiceIds: [extraInclude.groupId], choiceLabels: [extraInclude.label], priceDelta: 0 }]
         : []),
       { groupId: "drink", groupLabel: "Drink", choiceIds: [drinkId], choiceLabels: [selectedDrink.name], priceDelta: 0 },
     ];
 
     addItem({
-      productId: `deal-${deal.id}`,
+      productId: `${DEAL_PRODUCT_PREFIX}${deal.id}`,
       slug: deal.slug,
       name: deal.name,
       image: selectedItem.image,

@@ -1,4 +1,4 @@
-import { CartItem, OptionGroup, Product, SelectedOption } from "@/types";
+import { CartItem, Deal, OptionGroup, Product, SelectedOption } from "@/types";
 
 export interface SelectionState {
   [groupId: string]: string[];
@@ -47,6 +47,29 @@ export function selectionKey(productId: string, selection: SelectionState): stri
     .sort()
     .map((groupId) => `${groupId}:${[...selection[groupId]].sort().join(",")}`);
   return `${productId}__${parts.join("|")}`;
+}
+
+/** Cart productId prefix for deals/combos, which aren't entries in products.ts. */
+export const DEAL_PRODUCT_PREFIX = "deal-";
+
+/**
+ * Builds the cart line for a fixed deal. The "includes" choice id is the deal id —
+ * stable, so adding the same deal twice stacks into one line instead of two.
+ */
+export function buildDealCartItem(deal: Deal): Omit<CartItem, "cartItemId"> {
+  return {
+    productId: `${DEAL_PRODUCT_PREFIX}${deal.id}`,
+    slug: deal.slug,
+    name: deal.name,
+    image: deal.image,
+    category: "sides",
+    basePrice: deal.price,
+    unitPrice: deal.price,
+    quantity: 1,
+    selectedOptions: [
+      { groupId: "includes", groupLabel: "Includes", choiceIds: [deal.id], choiceLabels: deal.includes, priceDelta: 0 },
+    ],
+  };
 }
 
 export function isSelectionComplete(product: Product, selection: SelectionState): boolean {

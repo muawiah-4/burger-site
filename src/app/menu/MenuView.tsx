@@ -10,7 +10,8 @@ import { categories } from "@/lib/data/categories";
 import { deals } from "@/lib/data/deals";
 import { CategoryId, Product } from "@/types";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { cn, formatPrice, uid } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
+import { buildDealCartItem } from "@/lib/cart";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/Button";
 
@@ -76,19 +77,7 @@ export function MenuView() {
   function addDealToCart(dealId: string) {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
-    addItem({
-      productId: `deal-${deal.id}`,
-      slug: deal.slug,
-      name: deal.name,
-      image: deal.image,
-      category: "sides",
-      basePrice: deal.price,
-      unitPrice: deal.price,
-      quantity: 1,
-      selectedOptions: [
-        { groupId: "includes", groupLabel: "Includes", choiceIds: [uid("inc")], choiceLabels: deal.includes, priceDelta: 0 },
-      ],
-    });
+    addItem(buildDealCartItem(deal));
     openCart();
   }
 
