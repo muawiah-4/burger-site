@@ -5,7 +5,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { Zap, MapPinned, Heart, Tag, Flame, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Marquee } from "@/components/ui/Marquee";
-import { AppDownloadModal } from "./AppDownloadModal";
+import dynamic from "next/dynamic";
+import { useOpenedOnce } from "@/hooks/useOpenedOnce";
+
+// Fetched the first time "Get the App" is pressed.
+const AppDownloadModal = dynamic(() => import("./AppDownloadModal").then((m) => m.AppDownloadModal), { ssr: false });
 
 const perks = [
   { icon: Zap, label: "Order faster" },
@@ -24,6 +28,7 @@ const TICKER_ITEMS = [
 export function AppPromo() {
   const [modalOpen, setModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const modalOpened = useOpenedOnce(modalOpen);
 
   return (
     <>
@@ -119,7 +124,7 @@ export function AppPromo() {
         </div>
       </section>
 
-      <AppDownloadModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      {modalOpened && <AppDownloadModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />}
     </>
   );
 }

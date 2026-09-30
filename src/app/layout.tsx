@@ -8,10 +8,7 @@ import { FlyToCartProvider } from "@/context/fly-to-cart-context";
 import { AccountModalProvider } from "@/context/account-modal-context";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Mascot } from "@/components/layout/Mascot";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { ProductModal } from "@/components/product/ProductModal";
-import { AccountModal } from "@/components/account/AccountModal";
+import { LazyOverlays } from "@/components/layout/LazyOverlays";
 import { MotionProvider } from "@/components/providers/MotionProvider";
 import { StorageMaintenance } from "@/components/providers/StorageMaintenance";
 
@@ -48,10 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <Navbar />
                   <main>{children}</main>
                   <Footer />
-                  <CartDrawer />
-                  <ProductModal />
-                  <AccountModal />
-                  <Mascot />
+                  <LazyOverlays />
                   <StorageMaintenance />
                 </AccountModalProvider>
               </ProductModalProvider>
