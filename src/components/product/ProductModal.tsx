@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Check } from "lucide-react";
@@ -20,21 +20,12 @@ import { RatingStars } from "@/components/ui/RatingStars";
 import { Badge } from "@/components/ui/Badge";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Button } from "@/components/ui/Button";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useDialog } from "@/hooks/useDialog";
 
 export function ProductModal() {
   const { product, close } = useProductModal();
   const shouldReduceMotion = useReducedMotion();
-  useScrollLock(!!product);
-
-  useEffect(() => {
-    if (!product) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [product, close]);
+  const dialogRef = useDialog<HTMLDivElement>(!!product, close);
 
   return (
     <AnimatePresence>
@@ -49,7 +40,13 @@ export function ProductModal() {
             transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={close}
           />
-          <ProductModalPanel key={product.id} product={product} close={close} shouldReduceMotion={!!shouldReduceMotion} />
+          <ProductModalPanel
+            key={product.id}
+            dialogRef={dialogRef}
+            product={product}
+            close={close}
+            shouldReduceMotion={!!shouldReduceMotion}
+          />
         </>
       )}
     </AnimatePresence>
@@ -57,10 +54,12 @@ export function ProductModal() {
 }
 
 function ProductModalPanel({
+  dialogRef,
   product,
   close,
   shouldReduceMotion,
 }: {
+  dialogRef: RefObject<HTMLDivElement | null>;
   product: Product;
   close: () => void;
   shouldReduceMotion: boolean;
@@ -111,10 +110,12 @@ function ProductModalPanel({
   return (
     <motion.div
       key="modal"
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="product-modal-title"
-      className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col overflow-hidden rounded-t-3xl border border-cream/10 bg-charcoal shadow-2xl sm:inset-0 sm:m-auto sm:h-fit sm:max-h-[85vh] sm:w-[880px] sm:flex-row sm:rounded-3xl"
+      className="fixed inset-x-0 bottom-0 z-50 flex outline-none max-h-[92vh] flex-col overflow-hidden rounded-t-3xl border border-cream/10 bg-charcoal shadow-2xl sm:inset-0 sm:m-auto sm:h-fit sm:max-h-[85vh] sm:w-[880px] sm:flex-row sm:rounded-3xl"
       initial={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
       animate={shouldReduceMotion ? { opacity: 1 } : { y: 0 }}
       exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}

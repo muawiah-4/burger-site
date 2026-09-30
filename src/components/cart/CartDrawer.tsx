@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Trash2, ShoppingBag, Tag } from "lucide-react";
@@ -8,7 +8,7 @@ import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useDialog } from "@/hooks/useDialog";
 
 export function CartDrawer() {
   const {
@@ -21,16 +21,7 @@ export function CartDrawer() {
     promoCode,
   } = useCart();
   const shouldReduceMotion = useReducedMotion();
-  useScrollLock(isOpen);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeCart();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, closeCart]);
+  const dialogRef = useDialog<HTMLElement>(isOpen, closeCart);
 
   return (
     <AnimatePresence>
@@ -45,17 +36,19 @@ export function CartDrawer() {
             onClick={closeCart}
           />
           <motion.aside
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            aria-label="Shopping cart"
-            className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-md flex-col border-l border-cream/10 bg-charcoal shadow-2xl"
+            aria-labelledby="cart-drawer-title"
+            className="fixed inset-y-0 right-0 z-50 flex outline-none h-full w-full max-w-md flex-col border-l border-cream/10 bg-charcoal shadow-2xl"
             initial={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
             animate={shouldReduceMotion ? { opacity: 1 } : { x: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
             transition={{ duration: shouldReduceMotion ? 0.15 : 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex items-center justify-between border-b border-cream/10 p-5">
-              <h2 className="font-display text-lg font-extrabold text-cream">Your Cart</h2>
+              <h2 id="cart-drawer-title" className="font-display text-lg font-extrabold text-cream">Your Cart</h2>
               <button
                 type="button"
                 onClick={closeCart}

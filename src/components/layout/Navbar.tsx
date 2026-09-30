@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "motion/react";
@@ -10,7 +10,7 @@ import { useCart } from "@/context/cart-context";
 import { useFlyToCart } from "@/context/fly-to-cart-context";
 import { useAccountModal } from "@/context/account-modal-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useDialog } from "@/hooks/useDialog";
 
 const NAV_LINKS = [
   { href: "/menu", label: "Menu" },
@@ -50,7 +50,8 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [hasDarkHero]);
 
-  useScrollLock(mobileOpen);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const mobileMenuRef = useDialog<HTMLDivElement>(mobileOpen, closeMobile);
 
   const textTone = "text-cream";
 
@@ -146,7 +147,11 @@ export function Navbar() {
             )}
           </button>
           <button
+            type="button"
             aria-label="Open menu"
+            aria-haspopup="dialog"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
             onClick={() => setMobileOpen(true)}
             className={cn("focus-ring transition-transform active:scale-90", textTone)}
           >
@@ -167,15 +172,24 @@ export function Navbar() {
               onClick={() => setMobileOpen(false)}
             />
             <motion.div
-              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xs flex-col border-l border-cream/10 bg-charcoal p-6 shadow-2xl"
+              ref={mobileMenuRef}
+              id="mobile-menu"
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="mobile-menu-title"
+              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xs flex-col outline-none border-l border-cream/10 bg-charcoal p-6 shadow-2xl"
               initial={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
               animate={shouldReduceMotion ? { opacity: 1 } : { x: 0 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
               transition={{ duration: shouldReduceMotion ? 0.15 : 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="mb-8 flex items-center justify-between">
-                <span className="font-display text-lg font-extrabold text-cream">MENU</span>
+                <h2 id="mobile-menu-title" className="font-display text-lg font-extrabold text-cream">
+                  MENU
+                </h2>
                 <button
+                  type="button"
                   aria-label="Close menu"
                   onClick={() => setMobileOpen(false)}
                   className="focus-ring text-cream transition-transform active:scale-90"

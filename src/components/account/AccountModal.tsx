@@ -22,7 +22,7 @@ import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useDialog } from "@/hooks/useDialog";
 
 const USER_STORAGE_KEY = "ember.user.v1";
 
@@ -58,7 +58,7 @@ export function AccountModal() {
   const { isOpen, closeAccount, initialTab } = useAccountModal();
   const { applyPromo, openCart } = useCart();
   const shouldReduceMotion = useReducedMotion();
-  useScrollLock(isOpen);
+  const dialogRef = useDialog<HTMLElement>(isOpen, closeAccount);
 
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "rewards">(initialTab || "orders");
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
@@ -83,13 +83,7 @@ export function AccountModal() {
     setOrders(sorted);
     setProfile(getSavedUserProfile());
     setProfileSaved(false);
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeAccount();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, closeAccount]);
+  }, [isOpen]);
 
   function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
@@ -125,10 +119,12 @@ export function AccountModal() {
           />
           <motion.aside
             key="account-panel"
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            aria-label="Your Account"
-            className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-lg flex-col bg-charcoal shadow-2xl"
+            aria-labelledby="account-modal-title"
+            className="fixed inset-y-0 right-0 z-50 flex outline-none h-full w-full max-w-lg flex-col bg-charcoal shadow-2xl"
             initial={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
             animate={shouldReduceMotion ? { opacity: 1 } : { x: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
@@ -141,7 +137,7 @@ export function AccountModal() {
                   <Flame size={18} className="fill-current" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-extrabold text-cream">Ember Account</h2>
+                  <h2 id="account-modal-title" className="font-display text-lg font-extrabold text-cream">Ember Account</h2>
                   <p className="text-xs text-cream/60">Orders, saved details & rewards</p>
                 </div>
               </div>

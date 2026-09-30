@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Smartphone, QrCode, Check, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useDialog } from "@/hooks/useDialog";
 
 export function AppDownloadModal({
   isOpen,
@@ -14,7 +14,7 @@ export function AppDownloadModal({
   onClose: () => void;
 }) {
   const shouldReduceMotion = useReducedMotion();
-  useScrollLock(isOpen);
+  const dialogRef = useDialog<HTMLDivElement>(isOpen, onClose);
   const [phone, setPhone] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -27,12 +27,7 @@ export function AppDownloadModal({
     setSent(false);
     setError("");
     setInstalled(false);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   function handleSend(e: FormEvent) {
     e.preventDefault();
@@ -57,12 +52,20 @@ export function AppDownloadModal({
             transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* This wrapper sits above the backdrop, so it handles outside clicks itself. */}
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) onClose();
+            }}
+          >
             <motion.div
+              ref={dialogRef}
+              tabIndex={-1}
               role="dialog"
               aria-modal="true"
-              aria-label="Download Ember App"
-              className="relative w-full max-w-md rounded-3xl bg-charcoal p-6 shadow-2xl sm:p-8"
+              aria-labelledby="app-download-title"
+              className="relative w-full outline-none max-w-md rounded-3xl bg-charcoal p-6 shadow-2xl sm:p-8"
               initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
               animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
@@ -81,9 +84,9 @@ export function AppDownloadModal({
                 <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ember/10 text-ember">
                   <Smartphone size={24} />
                 </span>
-                <h3 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-cream">
+                <h2 id="app-download-title" className="mt-3 font-display text-2xl font-extrabold tracking-tight text-cream">
                   GET THE EMBER APP
-                </h3>
+                </h2>
                 <p className="mt-1 text-xs text-cream/60">
                   Instant ordering, real-time GPS tracking, and exclusive secret menu items.
                 </p>
