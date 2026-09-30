@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { cn } from "@/lib/utils";
 
 const LINES = [
@@ -123,7 +124,7 @@ export function Mascot() {
       </p>
       <AnimatePresence>
         {message && (
-          <motion.div
+          <m.div
             aria-hidden="true"
             initial={{ opacity: 0, y: 6, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -132,11 +133,11 @@ export function Mascot() {
             className="max-w-[170px] rounded-2xl rounded-br-sm border border-cream/10 bg-charcoal-raised px-3.5 py-2.5 text-xs font-semibold text-cream shadow-xl"
           >
             {message}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
-      <motion.button
+      <m.button
         type="button"
         onClick={handleClick}
         aria-label="Get a tip from Ember's mascot"
@@ -145,7 +146,7 @@ export function Mascot() {
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
         whileTap={{ scale: 0.92 }}
       >
-        <motion.div
+        <m.div
           animate={reacting ? { scale: [1, 1.16, 0.9, 1.05, 1], rotate: [0, -6, 5, -2, 0] } : {}}
           transition={{ duration: 0.45, ease: "easeInOut" }}
           className="drop-shadow-[0_8px_18px_rgba(0,0,0,0.5)]"
@@ -174,8 +175,8 @@ export function Mascot() {
             {/* smile */}
             <path d="M21 35 Q32.5 41 44 35" stroke="#171310" strokeWidth="2.4" strokeLinecap="round" fill="none" />
           </svg>
-        </motion.div>
-      </motion.button>
+        </m.div>
+      </m.button>
     </div>
   );
 }

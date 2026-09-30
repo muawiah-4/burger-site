@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "motion/react";
+import { AnimatePresence, useAnimationControls, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { Search, User, ShoppingBag, Menu as MenuIcon, X, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -117,12 +118,12 @@ export function Navbar() {
           >
             <ShoppingBag size={19} />
             {itemCount > 0 && (
-              <motion.span
+              <m.span
                 animate={badgeControls}
                 className="absolute right-0 top-0 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
-              </motion.span>
+              </m.span>
             )}
           </button>
           <ButtonLink href="/menu" size="sm" className="ml-3">
@@ -140,12 +141,12 @@ export function Navbar() {
           >
             <ShoppingBag size={22} />
             {itemCount > 0 && (
-              <motion.span
+              <m.span
                 animate={badgeControls}
                 className="absolute right-0 top-0 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
-              </motion.span>
+              </m.span>
             )}
           </button>
           <button
@@ -165,7 +166,7 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <>
-            <motion.div
+            <m.div
               className="fixed inset-0 z-40 bg-charcoal/60 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -173,7 +174,7 @@ export function Navbar() {
               transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
               onClick={() => setMobileOpen(false)}
             />
-            <motion.div
+            <m.div
               ref={mobileMenuRef}
               id="mobile-menu"
               tabIndex={-1}
@@ -227,7 +228,7 @@ export function Navbar() {
                   <User size={16} /> Account
                 </Button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

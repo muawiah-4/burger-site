@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
@@ -279,7 +280,7 @@ export default function CheckoutPage() {
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-cream/10 bg-charcoal-soft p-6 sm:p-8">
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div
+            <m.div
               key={step}
               ref={stepPanelRef}
               initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
@@ -319,7 +320,7 @@ export default function CheckoutPage() {
                   onEditItems={cart.openCart}
                 />
               )}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
 
           {step === 5 && (

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { Plus } from "lucide-react";
 import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
@@ -23,7 +23,7 @@ export function ProductCard({
   const primaryBadge = product.badges?.[0];
 
   return (
-    <motion.button
+    <m.button
       layout
       type="button"
       onClick={() => open(product)}
@@ -68,6 +68,6 @@ export function ProductCard({
           </span>
         </div>
       </div>
-    </motion.button>
+    </m.button>
   );
 }

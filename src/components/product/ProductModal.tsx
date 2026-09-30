@@ -2,7 +2,8 @@
 
 import { RefObject, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { X, Check } from "lucide-react";
 import { Product } from "@/types";
 import { useProductModal } from "@/context/product-modal-context";
@@ -31,7 +32,7 @@ export function ProductModal() {
     <AnimatePresence>
       {product && (
         <>
-          <motion.div
+          <m.div
             key="backdrop"
             className="fixed inset-0 z-50 bg-charcoal/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -120,7 +121,7 @@ function ProductModalPanel({
   }
 
   return (
-    <motion.div
+    <m.div
       key="modal"
       ref={dialogRef}
       tabIndex={-1}
@@ -261,6 +262,6 @@ function ProductModalPanel({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

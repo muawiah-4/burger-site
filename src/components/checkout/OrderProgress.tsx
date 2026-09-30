@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { ChefHat, Flame, Bike, ShoppingBag, PartyPopper, Check } from "lucide-react";
 import { PlacedOrder } from "@/types";
 import { deriveStatus } from "@/lib/orders";
@@ -47,7 +47,7 @@ export function OrderProgress({ order }: { order: PlacedOrder }) {
       </p>
       <div className="relative mt-2" aria-hidden="true">
         <div className="absolute left-0 top-5 h-1 w-full rounded-full bg-cream/10" />
-        <motion.div
+        <m.div
           className="absolute left-0 top-5 h-1 rounded-full bg-ember"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}

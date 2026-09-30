@@ -1,8 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { Product } from "@/types";
 import { ProductCard } from "./ProductCard";
+import { LayoutMotion } from "@/components/providers/LayoutMotion";
 
 export function ProductGrid({
   products,
@@ -24,15 +26,18 @@ export function ProductGrid({
   }
 
   return (
-    <motion.div
-      layout
-      className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
-    >
-      <AnimatePresence mode="popLayout">
-        {products.map((product, i) => (
-          <ProductCard key={product.id} product={product} preload={i < preloadCount} index={i} />
-        ))}
-      </AnimatePresence>
-    </motion.div>
+    // Cards reflow with layout animations when filters change: needs domMax.
+    <LayoutMotion>
+      <m.div
+        layout
+        className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
+      >
+        <AnimatePresence mode="popLayout">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} preload={i < preloadCount} index={i} />
+          ))}
+        </AnimatePresence>
+      </m.div>
+    </LayoutMotion>
   );
 }

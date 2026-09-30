@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { getImageProps } from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 
 interface Flight {
   id: string;
@@ -98,7 +99,7 @@ function FlightImage({ flight, onDone }: { flight: Flight; onDone: () => void })
   const dy = toCenterY - fromCenterY;
 
   return (
-    <motion.img
+    <m.img
       src={imgSrc}
       alt=""
       style={{

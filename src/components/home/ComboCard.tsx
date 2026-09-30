@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { Deal } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { DEAL_PRODUCT_PREFIX } from "@/lib/cart";
@@ -112,7 +112,7 @@ export function ComboCard({
 
   return (
     <div className="grid grid-cols-1 items-center gap-10 rounded-[2.5rem] border border-cream/10 bg-charcoal-soft p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-4">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, x: reverse ? 20 : -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: "-80px" }}
@@ -139,9 +139,9 @@ export function ComboCard({
         <Button variant="primary" size="lg" className="mt-6" onClick={buildCombo}>
           {deal.ctaLabel}
         </Button>
-      </motion.div>
+      </m.div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-80px" }}
@@ -157,7 +157,7 @@ export function ComboCard({
         <div className="relative aspect-square overflow-hidden rounded-3xl">
           <Image src={gallery[2]} alt={selectedDrink.name} fill sizes="25vw" className="object-cover" />
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

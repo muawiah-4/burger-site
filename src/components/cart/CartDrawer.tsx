@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { X, Trash2, ShoppingBag, Tag } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
@@ -27,7 +28,7 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <m.div
             className="fixed inset-0 z-50 bg-charcoal/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -35,7 +36,7 @@ export function CartDrawer() {
             transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={closeCart}
           />
-          <motion.aside
+          <m.aside
             ref={dialogRef}
             tabIndex={-1}
             role="dialog"
@@ -151,7 +152,7 @@ export function CartDrawer() {
                 </div>
               </>
             )}
-          </motion.aside>
+          </m.aside>
         </>
       )}
     </AnimatePresence>

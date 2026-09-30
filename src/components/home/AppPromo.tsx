@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { Zap, MapPinned, Heart, Tag, Flame, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Marquee } from "@/components/ui/Marquee";
@@ -57,7 +58,7 @@ export function AppPromo() {
               </Button>
             </div>
 
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -86,7 +87,7 @@ export function AppPromo() {
                 {/* Glowing icon */}
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6">
                   <div className="relative flex items-center justify-center">
-                    <motion.span
+                    <m.span
                       aria-hidden="true"
                       className="absolute h-20 w-20 rounded-full bg-ember blur-2xl"
                       // Fixed initial keeps the server and client markup identical; the
@@ -117,7 +118,7 @@ export function AppPromo() {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
 
           <Marquee items={TICKER_ITEMS} />

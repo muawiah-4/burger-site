@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { X, Smartphone, QrCode, Check, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
@@ -43,7 +44,7 @@ export function AppDownloadModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <m.div
             key="app-backdrop"
             className="fixed inset-0 z-50 bg-charcoal/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -59,7 +60,7 @@ export function AppDownloadModal({
               if (e.target === e.currentTarget) onClose();
             }}
           >
-            <motion.div
+            <m.div
               ref={dialogRef}
               tabIndex={-1}
               role="dialog"
@@ -162,7 +163,7 @@ export function AppDownloadModal({
                   </button>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           </div>
         </>
       )}

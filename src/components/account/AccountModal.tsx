@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, FormEvent } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import {
   X,
   User,
@@ -91,7 +92,7 @@ export function AccountModal() {
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <m.div
             key="account-backdrop"
             className="fixed inset-0 z-50 bg-charcoal/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -100,7 +101,7 @@ export function AccountModal() {
             transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={closeAccount}
           />
-          <motion.aside
+          <m.aside
             key="account-panel"
             ref={dialogRef}
             tabIndex={-1}
@@ -484,7 +485,7 @@ export function AccountModal() {
                 </div>
               )}
             </div>
-          </motion.aside>
+          </m.aside>
         </>
       )}
     </AnimatePresence>

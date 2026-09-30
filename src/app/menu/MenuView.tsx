@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { Search, X, Flame, TrendingUp, Leaf } from "lucide-react";
 import Image from "next/image";
 import { products } from "@/lib/data/products";
@@ -14,6 +14,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { buildDealCartItem } from "@/lib/cart";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/Button";
+import { LayoutMotion } from "@/components/providers/LayoutMotion";
 
 type CategoryFilter = "all" | CategoryId | "deals";
 
@@ -172,43 +173,45 @@ export function MenuView() {
 
       <div className="mt-10">
         {category === "deals" ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {deals.map((deal, i) => {
-              const savings = Math.round((deal.originalPrice - deal.price) * 100) / 100;
-              return (
-                <motion.div
-                  key={deal.id}
-                  layout
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.35,
-                    delay: (i % 3) * 0.06,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised"
-                >
-                  <div className="relative aspect-[16/10]">
-                    <Image src={deal.image} alt={deal.name} fill sizes="33vw" className="object-cover" />
-                    <div className="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase text-charcoal">
-                      Save {formatPrice(savings)}
+          <LayoutMotion>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {deals.map((deal, i) => {
+                const savings = Math.round((deal.originalPrice - deal.price) * 100) / 100;
+                return (
+                  <m.div
+                    key={deal.id}
+                    layout
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: (i % 3) * 0.06,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised"
+                  >
+                    <div className="relative aspect-[16/10]">
+                      <Image src={deal.image} alt={deal.name} fill sizes="33vw" className="object-cover" />
+                      <div className="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase text-charcoal">
+                        Save {formatPrice(savings)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="font-display text-lg font-extrabold text-cream">{deal.name}</h3>
-                    <p className="mt-1 text-sm text-cream/60">{deal.description}</p>
-                    <div className="mt-4 flex items-end gap-2">
-                      <span className="font-display text-2xl font-extrabold text-cream">{formatPrice(deal.price)}</span>
-                      <span className="pb-0.5 text-sm text-cream/60 line-through">{formatPrice(deal.originalPrice)}</span>
+                    <div className="flex flex-1 flex-col p-5">
+                      <h3 className="font-display text-lg font-extrabold text-cream">{deal.name}</h3>
+                      <p className="mt-1 text-sm text-cream/60">{deal.description}</p>
+                      <div className="mt-4 flex items-end gap-2">
+                        <span className="font-display text-2xl font-extrabold text-cream">{formatPrice(deal.price)}</span>
+                        <span className="pb-0.5 text-sm text-cream/60 line-through">{formatPrice(deal.originalPrice)}</span>
+                      </div>
+                      <Button variant="primary" className="mt-4 w-full" onClick={() => addDealToCart(deal.id)}>
+                        {deal.ctaLabel}
+                      </Button>
                     </div>
-                    <Button variant="primary" className="mt-4 w-full" onClick={() => addDealToCart(deal.id)}>
-                      {deal.ctaLabel}
-                    </Button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                  </m.div>
+                );
+              })}
+            </div>
+          </LayoutMotion>
         ) : sections.length === 0 ? (
           <ProductGrid products={[]} emptyMessage="Try a different search or clear your filters." />
         ) : (
