@@ -12,6 +12,7 @@ import { paymentLabel } from "@/lib/payment";
 import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
 import { ButtonLink } from "@/components/ui/Button";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 export default function OrderPage() {
   const params = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ export default function OrderPage() {
   }, [params.id]);
 
   if (order === undefined) {
-    return <div className="min-h-screen" />;
+    return <PageLoading label="Loading your order…" />;
   }
 
   if (order === null) {

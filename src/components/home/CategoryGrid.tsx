@@ -33,7 +33,7 @@ export function CategoryGrid() {
               >
                 <Image
                   src={cat.image}
-                  alt={cat.name}
+                  alt=""
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover opacity-70 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:opacity-80"

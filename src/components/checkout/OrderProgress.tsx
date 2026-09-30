@@ -35,12 +35,17 @@ export function OrderProgress({ order }: { order: PlacedOrder }) {
 
   const stages = order.fulfillment === "pickup" ? PICKUP_STAGES : DELIVERY_STAGES;
   const activeIndex = stages.findIndex((s) => s.id === status);
+  const statusLabel = stages[activeIndex]?.label ?? stages[stages.length - 1].label;
 
   void tick;
 
   return (
     <div>
-      <div className="relative mt-2">
+      {/* Mounted with the page, so only status changes are announced. */}
+      <p aria-live="polite" className="sr-only">
+        Order status: {statusLabel}
+      </p>
+      <div className="relative mt-2" aria-hidden="true">
         <div className="absolute left-0 top-5 h-1 w-full rounded-full bg-cream/10" />
         <motion.div
           className="absolute left-0 top-5 h-1 rounded-full bg-ember"

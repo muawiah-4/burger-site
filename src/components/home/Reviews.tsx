@@ -18,11 +18,12 @@ export function Reviews() {
               </div>
               <div>
                 <p className="font-display text-sm font-bold text-cream">{review.name}</p>
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-0.5" role="img" aria-label={`Rated ${review.rating} out of 5`}>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       size={12}
+                      aria-hidden="true"
                       className={i < review.rating ? "fill-gold text-gold" : "fill-cream/10 text-cream/10"}
                     />
                   ))}

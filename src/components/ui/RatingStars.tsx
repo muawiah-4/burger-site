@@ -15,7 +15,11 @@ export function RatingStars({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-1", className)} aria-label={`Rated ${rating} out of 5`}>
+    <div
+      role="img"
+      className={cn("flex items-center gap-1", className)}
+      aria-label={`Rated ${rating.toFixed(1)} out of 5${reviewCount !== undefined ? `, ${reviewCount} reviews` : ""}`}
+    >
       <Star size={size} className="fill-gold text-gold" aria-hidden="true" />
       {showValue && <span className="text-xs font-semibold text-cream/80">{rating.toFixed(1)}</span>}
       {reviewCount !== undefined && (

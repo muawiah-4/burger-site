@@ -26,6 +26,7 @@ import { AddressStep } from "@/components/checkout/AddressStep";
 import { PaymentStep, CardDetails } from "@/components/checkout/PaymentStep";
 import { ReviewStep } from "@/components/checkout/ReviewStep";
 import { Button } from "@/components/ui/Button";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 const EMPTY_ADDRESS: DeliveryAddress = { line1: "", line2: "", city: "", zip: "", instructions: "" };
 const EMPTY_CUSTOMER: CustomerInfo = { name: "", phone: "", email: "" };
@@ -252,8 +253,12 @@ export default function CheckoutPage() {
     router.push(`/order/${id}`);
   }
 
+  if (!cart.hydrated) {
+    return <PageLoading label="Loading your cart…" />;
+  }
   if (cart.items.length === 0 && !placing) {
-    return null;
+    // The effect above is redirecting to /menu.
+    return <PageLoading label="Your cart is empty. Taking you to the menu…" />;
   }
 
   return (
