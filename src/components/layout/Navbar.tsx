@@ -92,11 +92,11 @@ export function Navbar() {
           ))}
         </ul>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="-my-1 hidden items-center gap-0.5 lg:flex">
           <Link
             href="/menu?focus=search"
             aria-label="Search menu"
-            className={cn("focus-ring transition-all active:scale-90 hover:text-ember-text", textTone)}
+            className={cn("focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <Search size={19} />
           </Link>
@@ -104,43 +104,45 @@ export function Navbar() {
             type="button"
             aria-label="Account"
             onClick={openAccount}
-            className={cn("focus-ring transition-all active:scale-90 hover:text-ember-text", textTone)}
+            className={cn("focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <User size={19} />
           </button>
           <button
             ref={registerCartIcon}
+            type="button"
             aria-label={`Cart, ${itemCount} items`}
             onClick={openCart}
-            className={cn("focus-ring relative transition-all active:scale-90 hover:text-ember-text", textTone)}
+            className={cn("focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <ShoppingBag size={19} />
             {itemCount > 0 && (
               <motion.span
                 animate={badgeControls}
-                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
+                className="absolute right-0 top-0 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
               </motion.span>
             )}
           </button>
-          <ButtonLink href="/menu" size="sm">
+          <ButtonLink href="/menu" size="sm" className="ml-3">
             Order Now
           </ButtonLink>
         </div>
 
-        <div className="flex items-center gap-3 lg:hidden">
+        <div className="-my-1 -mr-2 flex items-center gap-0.5 lg:hidden">
           <button
             ref={registerMobileCartIcon}
+            type="button"
             aria-label={`Cart, ${itemCount} items`}
             onClick={openCart}
-            className={cn("focus-ring relative transition-transform active:scale-90", textTone)}
+            className={cn("focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-transform active:scale-90", textTone)}
           >
             <ShoppingBag size={22} />
             {itemCount > 0 && (
               <motion.span
                 animate={badgeControls}
-                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
+                className="absolute right-0 top-0 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
               </motion.span>
@@ -153,7 +155,7 @@ export function Navbar() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
             onClick={() => setMobileOpen(true)}
-            className={cn("focus-ring transition-transform active:scale-90", textTone)}
+            className={cn("focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full transition-transform active:scale-90", textTone)}
           >
             <MenuIcon size={24} />
           </button>
@@ -192,7 +194,7 @@ export function Navbar() {
                   type="button"
                   aria-label="Close menu"
                   onClick={() => setMobileOpen(false)}
-                  className="focus-ring text-cream transition-transform active:scale-90"
+                  className="focus-ring -mr-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-cream transition-transform active:scale-90"
                 >
                   <X size={24} />
                 </button>
