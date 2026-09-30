@@ -236,8 +236,10 @@ export default function CheckoutPage() {
       displayNumber: generateDisplayNumber(),
       items: cart.items,
       fulfillment: cart.fulfillment,
-      customer,
-      address: cart.fulfillment === "delivery" ? address : undefined,
+      // Contact details and the street address are only needed for this session's
+      // review step, so the saved order keeps just the city and ZIP for the tracker.
+      deliveryArea:
+        cart.fulfillment === "delivery" ? { city: address.city.trim(), zip: address.zip.trim() } : undefined,
       pickupLocationId: cart.fulfillment === "pickup" ? cart.pickupLocationId ?? undefined : undefined,
       payment,
       subtotal: cart.totals.subtotal,

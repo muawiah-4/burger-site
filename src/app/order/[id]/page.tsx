@@ -71,14 +71,13 @@ export default function OrderPage() {
           <h2 className="font-display text-xs font-bold uppercase tracking-wide text-cream/60">
             {order.fulfillment === "delivery" ? "Delivering to" : "Pickup at"}
           </h2>
-          {order.fulfillment === "delivery" && order.address ? (
+          {order.fulfillment === "delivery" ? (
             <p className="mt-2 flex items-start gap-2 text-sm text-cream/70">
               <MapPin size={15} className="mt-0.5 shrink-0" />
               <span>
-                {order.address.line1}
-                {order.address.line2 ? `, ${order.address.line2}` : ""}
+                {order.deliveryArea ? `${order.deliveryArea.city}, ${order.deliveryArea.zip}` : "Your delivery address"}
                 <br />
-                {order.address.city}, {order.address.zip}
+                <span className="text-xs text-cream/60">Street address isn&apos;t stored on this device.</span>
               </span>
             </p>
           ) : (

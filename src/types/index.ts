@@ -121,6 +121,11 @@ export interface DeliveryAddress {
   instructions: string;
 }
 
+export interface DeliveryArea {
+  city: string;
+  zip: string;
+}
+
 export type PaymentMethod = "card" | "cash" | "wallet";
 
 /** "ready" is pickup-only (waiting at the counter); "delivered" also means "picked up" for pickup orders. */
@@ -133,8 +138,11 @@ export interface PlacedOrder {
   displayNumber?: string;
   items: CartItem[];
   fulfillment: FulfillmentMethod;
-  customer: CustomerInfo;
-  address?: DeliveryAddress;
+  /**
+   * Coarse delivery area shown on the tracker. Saved orders deliberately hold no
+   * name, phone, email or street address (older orders that did are scrubbed on load).
+   */
+  deliveryArea?: DeliveryArea;
   pickupLocationId?: string;
   payment: PaymentMethod;
   subtotal: number;

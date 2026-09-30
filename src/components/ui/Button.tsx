@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ButtonHTMLAttributes, ReactNode } from "react";
+import { ComponentPropsWithRef, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "outline";
 type Size = "sm" | "md" | "lg";
@@ -39,7 +39,7 @@ export function Button({
   icon,
   iconPosition = "left",
   ...rest
-}: BaseProps & ButtonHTMLAttributes<HTMLButtonElement>) {
+}: BaseProps & ComponentPropsWithRef<"button">) {
   return (
     <button className={cn(base, variantClasses[variant], sizeClasses[size], className)} {...rest}>
       {icon && iconPosition === "left" && icon}

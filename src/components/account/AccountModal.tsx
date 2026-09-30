@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useRef, useState, FormEvent } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
@@ -15,9 +15,11 @@ import {
   ShoppingBag,
   ChefHat,
   Bike,
+  Trash2,
 } from "lucide-react";
 import { useAccountModal } from "@/context/account-modal-context";
-import { getAllOrders, deriveStatus, orderDisplayNumber } from "@/lib/orders";
+import { getAllOrders, deriveStatus, orderDisplayNumber, ORDER_RETENTION_DAYS, MAX_STORED_ORDERS } from "@/lib/orders";
+import { clearAllLocalData } from "@/lib/local-data";
 import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -27,7 +29,7 @@ import { getSavedUserProfile, saveUserProfile, SavedUserProfile } from "@/lib/us
 
 export function AccountModal() {
   const { isOpen, closeAccount, initialTab } = useAccountModal();
-  const { applyPromo, openCart } = useCart();
+  const { applyPromo, openCart, resetCart } = useCart();
   const shouldReduceMotion = useReducedMotion();
   const dialogRef = useDialog<HTMLElement>(isOpen, closeAccount);
 
@@ -61,6 +63,16 @@ export function AccountModal() {
     saveUserProfile(profile);
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2500);
+  }
+
+  function handleClearData(): boolean {
+    const ok = clearAllLocalData();
+    // Also drop the in-memory copies, or the cart would write itself straight back.
+    resetCart();
+    setOrders([]);
+    setProfile(getSavedUserProfile());
+    setProfileSaved(false);
+    return ok;
   }
 
   function handleCopyCode(code: string) {
@@ -182,6 +194,9 @@ export function AccountModal() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
+                      <p className="text-[11px] text-cream/60">
+                        Your last {MAX_STORED_ORDERS} orders are kept on this device for {ORDER_RETENTION_DAYS} days.
+                      </p>
                       {orders.map((order) => {
                         const { status } = deriveStatus(order);
                         const statusColors = {
@@ -264,6 +279,7 @@ export function AccountModal() {
 
               {/* Tab 2: Profile */}
               {activeTab === "profile" && (
+                <div className="flex flex-col gap-6">
                 <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
                   <div className="rounded-2xl bg-charcoal-raised p-4 border border-cream/10">
                     <h3 className="font-display text-xs font-bold uppercase tracking-wider text-cream/60">
@@ -368,6 +384,8 @@ export function AccountModal() {
                     </Button>
                   </div>
                 </form>
+                <ClearDataSection onClear={handleClearData} />
+                </div>
               )}
 
               {/* Tab 3: Rewards */}
@@ -470,5 +488,93 @@ export function AccountModal() {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/**
+ * "Clear my data": removes the cart, order history and saved details from this
+ * browser. The confirmation is inline (no window.confirm) and keeps focus sensible.
+ */
+function ClearDataSection({ onClear }: { onClear: () => boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  const [result, setResult] = useState<"cleared" | "failed" | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
+
+  useEffect(() => {
+    if (confirming) cancelRef.current?.focus();
+    else if (returnFocus.current) {
+      returnFocus.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [confirming]);
+
+  return (
+    <section
+      aria-labelledby="clear-data-title"
+      className="rounded-2xl border border-cream/10 bg-charcoal-raised p-4"
+    >
+      <h3 id="clear-data-title" className="font-display text-xs font-bold uppercase tracking-wider text-cream/60">
+        Your data on this device
+      </h3>
+      <p className="mt-2 text-xs text-cream/70">
+        Ember has no servers. Your cart, order history and saved details are kept only in this browser.
+      </p>
+
+      {confirming ? (
+        <div role="group" aria-labelledby="clear-data-confirm" className="mt-3 rounded-xl border border-ember/40 bg-ember/10 p-3">
+          <p id="clear-data-confirm" className="text-xs font-semibold text-cream">
+            Remove your cart, order history and saved details from this browser? This can&apos;t be undone.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            <Button
+              ref={cancelRef}
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                returnFocus.current = true;
+                setConfirming(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                setResult(onClear() ? "cleared" : "failed");
+                returnFocus.current = true;
+                setConfirming(false);
+              }}
+            >
+              Yes, clear everything
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex justify-end">
+          <Button
+            ref={triggerRef}
+            type="button"
+            size="sm"
+            variant="outline"
+            icon={<Trash2 size={14} />}
+            onClick={() => {
+              setResult(null);
+              setConfirming(true);
+            }}
+          >
+            Clear my data
+          </Button>
+        </div>
+      )}
+      <p role="status" className="mt-2 text-xs font-semibold empty:hidden">
+        {result === "cleared" && <span className="text-emerald-400">All Ember data removed from this browser.</span>}
+        {result === "failed" && <span className="text-ember-text">Couldn&apos;t access browser storage.</span>}
+      </p>
+    </section>
   );
 }

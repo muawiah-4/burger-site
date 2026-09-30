@@ -10,6 +10,8 @@ import {
   isSelectionComplete,
 } from "@/lib/cart";
 
+export const CART_STORAGE_KEY = "ember.cart.v1";
+
 export interface StoredCartState {
   items: CartItem[];
   fulfillment: FulfillmentMethod;
@@ -24,7 +26,7 @@ export const EMPTY_CART_STATE: StoredCartState = {
   promoCode: "",
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -32,16 +34,16 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((v) => typeof v === "string");
 }
 
-function isFiniteNonNegative(value: unknown): value is number {
+export function isFiniteNonNegative(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 /** next/image throws on hosts not listed in next.config.ts, so only accept local paths and the configured host. */
-function isRenderableImage(value: unknown): value is string {
+export function isRenderableImage(value: unknown): value is string {
   return typeof value === "string" && (/^\/(?!\/)/.test(value) || value.startsWith("https://images.unsplash.com/"));
 }
 
-function parseSelectedOption(value: unknown): SelectedOption | null {
+export function parseSelectedOption(value: unknown): SelectedOption | null {
   if (!isRecord(value)) return null;
   const { groupId, groupLabel, choiceIds, choiceLabels, priceDelta } = value;
   if (typeof groupId !== "string" || typeof groupLabel !== "string") return null;

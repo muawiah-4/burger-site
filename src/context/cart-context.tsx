@@ -11,7 +11,7 @@ import {
 } from "react";
 import { CartItem, FulfillmentMethod } from "@/types";
 import { computeTotals, evaluatePromo, MAX_ITEM_QUANTITY, selectionKey, Totals } from "@/lib/cart";
-import { EMPTY_CART_STATE, parseStoredCart, StoredCartState } from "@/lib/cart-storage";
+import { CART_STORAGE_KEY, EMPTY_CART_STATE, parseStoredCart, StoredCartState } from "@/lib/cart-storage";
 import { uid } from "@/lib/utils";
 
 type CartState = StoredCartState;
@@ -21,12 +21,13 @@ type Action =
   | { type: "REMOVE_ITEM"; cartItemId: string }
   | { type: "UPDATE_QUANTITY"; cartItemId: string; quantity: number }
   | { type: "CLEAR_CART" }
+  | { type: "RESET" }
   | { type: "SET_FULFILLMENT"; fulfillment: FulfillmentMethod }
   | { type: "SET_PICKUP_LOCATION"; locationId: string }
   | { type: "SET_PROMO"; code: string }
   | { type: "HYDRATE"; state: CartState };
 
-const STORAGE_KEY = "ember.cart.v1";
+const STORAGE_KEY = CART_STORAGE_KEY;
 
 function reducer(state: CartState, action: Action): CartState {
   switch (action.type) {
@@ -64,6 +65,8 @@ function reducer(state: CartState, action: Action): CartState {
     }
     case "CLEAR_CART":
       return { ...state, items: [], promoCode: "" };
+    case "RESET":
+      return EMPTY_CART_STATE;
     case "SET_FULFILLMENT":
       return { ...state, fulfillment: action.fulfillment };
     case "SET_PICKUP_LOCATION":
@@ -88,6 +91,15 @@ function keyToSelection(item: CartItem) {
 
 const initialState: CartState = EMPTY_CART_STATE;
 
+function isEmptyCart(state: CartState) {
+  return (
+    state.items.length === 0 &&
+    state.promoCode === EMPTY_CART_STATE.promoCode &&
+    state.fulfillment === EMPTY_CART_STATE.fulfillment &&
+    state.pickupLocationId === EMPTY_CART_STATE.pickupLocationId
+  );
+}
+
 interface CartContextValue {
   items: CartItem[];
   fulfillment: FulfillmentMethod;
@@ -105,6 +117,8 @@ interface CartContextValue {
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
+  /** Empties the cart and forgets fulfillment, pickup location and promo (used by "Clear my data"). */
+  resetCart: () => void;
   setFulfillment: (f: FulfillmentMethod) => void;
   setPickupLocation: (locationId: string) => void;
   applyPromo: (code: string) => void;
@@ -143,7 +157,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // Nothing worth keeping: remove the key rather than persisting an empty cart,
+      // so "Clear my data" really leaves no cart entry behind.
+      if (isEmptyCart(state)) localStorage.removeItem(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // storage unavailable — ignore
     }
@@ -199,6 +216,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     removeItem: (cartItemId) => dispatch({ type: "REMOVE_ITEM", cartItemId }),
     updateQuantity: (cartItemId, quantity) => dispatch({ type: "UPDATE_QUANTITY", cartItemId, quantity }),
     clearCart: () => dispatch({ type: "CLEAR_CART" }),
+    resetCart: () => dispatch({ type: "RESET" }),
     setFulfillment: (f) => dispatch({ type: "SET_FULFILLMENT", fulfillment: f }),
     setPickupLocation: (locationId) => dispatch({ type: "SET_PICKUP_LOCATION", locationId }),
     applyPromo,
