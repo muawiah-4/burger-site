@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Smartphone, QrCode, Check, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function AppDownloadModal({
   isOpen,
@@ -13,6 +14,7 @@ export function AppDownloadModal({
   onClose: () => void;
 }) {
   const shouldReduceMotion = useReducedMotion();
+  useScrollLock(isOpen);
   const [phone, setPhone] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -29,11 +31,7 @@ export function AppDownloadModal({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
   function handleSend(e: FormEvent) {

@@ -20,10 +20,12 @@ import { RatingStars } from "@/components/ui/RatingStars";
 import { Badge } from "@/components/ui/Badge";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Button } from "@/components/ui/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function ProductModal() {
   const { product, close } = useProductModal();
   const shouldReduceMotion = useReducedMotion();
+  useScrollLock(!!product);
 
   useEffect(() => {
     if (!product) return;
@@ -31,11 +33,7 @@ export function ProductModal() {
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [product, close]);
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -9,6 +9,7 @@ import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Button } from "@/components/ui/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function CartDrawer() {
   const {
@@ -21,6 +22,16 @@ export function CartDrawer() {
     promoCode,
   } = useCart();
   const shouldReduceMotion = useReducedMotion();
+  useScrollLock(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeCart();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen, closeCart]);
 
   return (
     <AnimatePresence>

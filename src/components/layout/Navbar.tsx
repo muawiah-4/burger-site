@@ -10,6 +10,7 @@ import { useCart } from "@/context/cart-context";
 import { useFlyToCart } from "@/context/fly-to-cart-context";
 import { useAccountModal } from "@/context/account-modal-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 const NAV_LINKS = [
   { href: "/menu", label: "Menu" },
@@ -49,12 +50,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [hasDarkHero]);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
+  useScrollLock(mobileOpen);
 
   const textTone = "text-cream";
 

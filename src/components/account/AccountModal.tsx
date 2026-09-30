@@ -22,6 +22,7 @@ import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 const USER_STORAGE_KEY = "ember.user.v1";
 
@@ -57,6 +58,7 @@ export function AccountModal() {
   const { isOpen, closeAccount, initialTab } = useAccountModal();
   const { applyPromo, openCart } = useCart();
   const shouldReduceMotion = useReducedMotion();
+  useScrollLock(isOpen);
 
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "rewards">(initialTab || "orders");
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
@@ -86,11 +88,7 @@ export function AccountModal() {
       if (e.key === "Escape") closeAccount();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, closeAccount]);
 
   function handleSaveProfile(e: FormEvent) {
