@@ -2,12 +2,13 @@
 
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MAX_ITEM_QUANTITY } from "@/lib/cart";
 
 export function QuantityStepper({
   quantity,
   onChange,
   min = 1,
-  max = 20,
+  max = MAX_ITEM_QUANTITY,
   size = "md",
   className,
 }: {

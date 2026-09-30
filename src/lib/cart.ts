@@ -49,6 +49,9 @@ export function selectionKey(productId: string, selection: SelectionState): stri
   return `${productId}__${parts.join("|")}`;
 }
 
+/** Upper bound for a single cart line's quantity (matches QuantityStepper's max). */
+export const MAX_ITEM_QUANTITY = 20;
+
 /** Cart productId prefix for deals/combos, which aren't entries in products.ts. */
 export const DEAL_PRODUCT_PREFIX = "deal-";
 

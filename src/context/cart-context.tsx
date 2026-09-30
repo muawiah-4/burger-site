@@ -10,15 +10,11 @@ import {
   useState,
 } from "react";
 import { CartItem, FulfillmentMethod } from "@/types";
-import { computeTotals, evaluatePromo, selectionKey, Totals } from "@/lib/cart";
+import { computeTotals, evaluatePromo, MAX_ITEM_QUANTITY, selectionKey, Totals } from "@/lib/cart";
+import { EMPTY_CART_STATE, parseStoredCart, StoredCartState } from "@/lib/cart-storage";
 import { uid } from "@/lib/utils";
 
-interface CartState {
-  items: CartItem[];
-  fulfillment: FulfillmentMethod;
-  pickupLocationId: string | null;
-  promoCode: string;
-}
+type CartState = StoredCartState;
 
 type Action =
   | { type: "ADD_ITEM"; item: Omit<CartItem, "cartItemId">; key: string }
@@ -42,11 +38,15 @@ function reducer(state: CartState, action: Action): CartState {
         const items = [...state.items];
         items[existingIndex] = {
           ...items[existingIndex],
-          quantity: items[existingIndex].quantity + action.item.quantity,
+          quantity: Math.min(items[existingIndex].quantity + action.item.quantity, MAX_ITEM_QUANTITY),
         };
         return { ...state, items };
       }
-      const newItem: CartItem = { ...action.item, cartItemId: uid("cart") };
+      const newItem: CartItem = {
+        ...action.item,
+        quantity: Math.min(action.item.quantity, MAX_ITEM_QUANTITY),
+        cartItemId: uid("cart"),
+      };
       return { ...state, items: [...state.items, newItem] };
     }
     case "REMOVE_ITEM":
@@ -58,7 +58,7 @@ function reducer(state: CartState, action: Action): CartState {
       return {
         ...state,
         items: state.items.map((i) =>
-          i.cartItemId === action.cartItemId ? { ...i, quantity: action.quantity } : i
+          i.cartItemId === action.cartItemId ? { ...i, quantity: Math.min(action.quantity, MAX_ITEM_QUANTITY) } : i
         ),
       };
     }
@@ -86,12 +86,7 @@ function keyToSelection(item: CartItem) {
   return selection;
 }
 
-const initialState: CartState = {
-  items: [],
-  fulfillment: "delivery",
-  pickupLocationId: null,
-  promoCode: "",
-};
+const initialState: CartState = EMPTY_CART_STATE;
 
 interface CartContextValue {
   items: CartItem[];
@@ -126,15 +121,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as CartState;
-        dispatch({ type: "HYDRATE", state: { ...initialState, ...parsed } });
-      }
+      // parseStoredCart validates the shape, drops malformed lines and re-prices
+      // items from the menu data rather than trusting stored prices.
+      if (raw) dispatch({ type: "HYDRATE", state: parseStoredCart(raw) });
     } catch {
-      // ignore corrupt storage
+      // storage unavailable — start with an empty cart
     } finally {
       setHydrated(true);
     }
+
+    // Cross-tab sync: another tab wrote the cart, so adopt its state.
+    function onStorage(e: StorageEvent) {
+      if (e.storageArea !== localStorage) return;
+      if (e.key !== STORAGE_KEY && e.key !== null) return;
+      dispatch({ type: "HYDRATE", state: parseStoredCart(e.key === null ? null : e.newValue) });
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   useEffect(() => {
