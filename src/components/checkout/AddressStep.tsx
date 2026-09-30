@@ -24,14 +24,22 @@ export function AddressStep({
   if (fulfillment === "pickup") {
     return (
       <div>
-        <h2 className="font-display text-xl font-extrabold text-cream">Choose a pickup location</h2>
+        <h2 id="pickup-heading" className="font-display text-xl font-extrabold text-cream">
+          Choose a pickup location
+        </h2>
         <p className="mt-1 text-sm text-cream/60">Pick the Ember closest to you.</p>
-        <div className="mt-6 flex flex-col gap-3">
-          {locations.map((loc) => {
+        <div
+          role="group"
+          aria-labelledby="pickup-heading"
+          aria-describedby={errors.line1 ? "pickup-error" : undefined}
+          className="mt-6 flex flex-col gap-3"
+        >
+          {locations.map((loc, index) => {
             const active = pickupLocationId === loc.id;
             return (
               <button
                 key={loc.id}
+                id={index === 0 ? "checkout-pickup-first" : undefined}
                 type="button"
                 onClick={() => onPickupLocationChange(loc.id)}
                 aria-pressed={active}
@@ -61,7 +69,11 @@ export function AddressStep({
             );
           })}
         </div>
-        {errors.line1 && <p className="mt-2 text-xs font-semibold text-ember-text">{errors.line1}</p>}
+        {errors.line1 && (
+          <p id="pickup-error" role="alert" className="mt-2 text-xs font-semibold text-ember-text">
+            {errors.line1}
+          </p>
+        )}
       </div>
     );
   }
@@ -72,38 +84,49 @@ export function AddressStep({
       <p className="mt-1 text-sm text-cream/60">Where should we bring your order?</p>
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
+          id="checkout-line1"
           label="Street Address"
           placeholder="123 Main Street"
+          autoComplete="address-line1"
           value={address.line1}
           error={errors.line1}
-          className="sm:col-span-2"
+          wrapperClassName="sm:col-span-2"
           onChange={(e) => onAddressChange({ ...address, line1: e.target.value })}
         />
         <Field
+          id="checkout-line2"
           label="Apartment / Floor"
           placeholder="Apt 4B (optional)"
+          autoComplete="address-line2"
           value={address.line2}
           onChange={(e) => onAddressChange({ ...address, line2: e.target.value })}
         />
         <Field
+          id="checkout-city"
           label="City"
           placeholder="Springfield"
+          autoComplete="address-level2"
           value={address.city}
           error={errors.city}
           onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
         />
         <Field
+          id="checkout-zip"
           label="ZIP Code"
           placeholder="94105"
+          autoComplete="postal-code"
+          inputMode="numeric"
           value={address.zip}
           error={errors.zip}
           onChange={(e) => onAddressChange({ ...address, zip: e.target.value })}
         />
         <Field
+          id="checkout-instructions"
           label="Delivery Instructions"
           placeholder="Leave at door (optional)"
+          autoComplete="off"
           value={address.instructions}
-          className="sm:col-span-2"
+          wrapperClassName="sm:col-span-2"
           onChange={(e) => onAddressChange({ ...address, instructions: e.target.value })}
         />
       </div>

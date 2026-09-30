@@ -66,33 +66,41 @@ export function PaymentStep({
       {method === "card" && (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
+            id="checkout-cc-name"
             label="Name on Card"
             placeholder="Jordan Rivera"
+            autoComplete="cc-name"
             value={card.name}
             error={errors.name}
-            className="sm:col-span-2"
+            wrapperClassName="sm:col-span-2"
             onChange={(e) => onCardChange({ ...card, name: e.target.value })}
           />
           <Field
+            id="checkout-cc-number"
             label="Card Number"
             placeholder="4242 4242 4242 4242"
             inputMode="numeric"
+            autoComplete="cc-number"
             value={card.number}
             error={errors.number}
-            className="sm:col-span-2"
+            wrapperClassName="sm:col-span-2"
             onChange={(e) => onCardChange({ ...card, number: e.target.value })}
           />
           <Field
+            id="checkout-cc-exp"
             label="Expiry (MM/YY)"
             placeholder="08/28"
+            autoComplete="cc-exp"
             value={card.expiry}
             error={errors.expiry}
             onChange={(e) => onCardChange({ ...card, expiry: e.target.value })}
           />
           <Field
+            id="checkout-cc-csc"
             label="CVC"
             placeholder="123"
             inputMode="numeric"
+            autoComplete="cc-csc"
             value={card.cvc}
             error={errors.cvc}
             onChange={(e) => onCardChange({ ...card, cvc: e.target.value })}

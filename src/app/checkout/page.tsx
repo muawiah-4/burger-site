@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart-context";
 import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
 import { generateDisplayNumber, generateOrderId, saveOrder } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
+import { getSavedUserProfile } from "@/lib/user-profile";
 import {
   isValidCardNumber,
   isValidCvc,
@@ -30,6 +31,29 @@ const EMPTY_ADDRESS: DeliveryAddress = { line1: "", line2: "", city: "", zip: ""
 const EMPTY_CUSTOMER: CustomerInfo = { name: "", phone: "", email: "" };
 const EMPTY_CARD: CardDetails = { name: "", number: "", expiry: "", cvc: "" };
 
+// Field ids in the order they appear, so a failed Continue can focus the first invalid one.
+const CUSTOMER_FIELD_IDS: Record<keyof CustomerInfo, string> = {
+  name: "checkout-name",
+  phone: "checkout-phone",
+  email: "checkout-email",
+};
+const ADDRESS_FIELD_IDS: Partial<Record<keyof DeliveryAddress, string>> = {
+  line1: "checkout-line1",
+  city: "checkout-city",
+  zip: "checkout-zip",
+};
+const CARD_FIELD_IDS: Record<keyof CardDetails, string> = {
+  name: "checkout-cc-name",
+  number: "checkout-cc-number",
+  expiry: "checkout-cc-exp",
+  cvc: "checkout-cc-csc",
+};
+
+function firstInvalidId<K extends string>(errors: Partial<Record<K, string>>, ids: Partial<Record<K, string>>) {
+  const key = (Object.keys(ids) as K[]).find((k) => errors[k]);
+  return key ? ids[key] : undefined;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const cart = useCart();
@@ -49,6 +73,34 @@ export default function CheckoutPage() {
   const [customerErrors, setCustomerErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const [addressErrors, setAddressErrors] = useState<Partial<Record<keyof DeliveryAddress, string>>>({});
   const [cardErrors, setCardErrors] = useState<Partial<Record<keyof CardDetails, string>>>({});
+  // Set after a failed Continue; focused once the errors have rendered so AT reads them with the field.
+  const [focusRequest, setFocusRequest] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const el = document.getElementById(focusRequest.id);
+    el?.focus();
+    el?.scrollIntoView({ block: "center", behavior: shouldReduceMotion ? "auto" : "smooth" });
+  }, [focusRequest, shouldReduceMotion]);
+
+  useEffect(() => {
+    // Pre-fill from the profile saved in the Account modal, without overwriting
+    // anything already typed. localStorage is client-only, hence the effect.
+    const profile = getSavedUserProfile();
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setCustomer((c) => ({
+      name: c.name || profile.name,
+      phone: c.phone || profile.phone,
+      email: c.email || profile.email,
+    }));
+    setAddress((a) => ({
+      ...a,
+      line1: a.line1 || profile.line1,
+      city: a.city || profile.city,
+      zip: a.zip || profile.zip,
+    }));
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
 
   useEffect(() => {
     // Wait for the cart to finish reading localStorage before deciding it's
@@ -58,24 +110,22 @@ export default function CheckoutPage() {
     }
   }, [cart.hydrated, cart.items.length, placing, router]);
 
-  const canContinueFromAddress = useMemo(() => {
-    if (cart.fulfillment === "pickup") return !!cart.pickupLocationId;
-    return true;
-  }, [cart.fulfillment, cart.pickupLocationId]);
-
   function validateCustomer(): boolean {
     const errors: Partial<Record<keyof CustomerInfo, string>> = {};
     if (!isValidName(customer.name)) errors.name = "Enter your full name.";
     if (!isValidPhone(customer.phone)) errors.phone = "Enter a valid phone number.";
     if (!isValidEmail(customer.email)) errors.email = "Enter a valid email address.";
     setCustomerErrors(errors);
-    return Object.keys(errors).length === 0;
+    const invalid = firstInvalidId(errors, CUSTOMER_FIELD_IDS);
+    if (invalid) setFocusRequest({ id: invalid });
+    return !invalid;
   }
 
   function validateAddress(): boolean {
     if (cart.fulfillment === "pickup") {
       const ok = !!cart.pickupLocationId;
-      setAddressErrors(ok ? {} : { line1: "Select a pickup location to continue." });
+      setAddressErrors(ok ? {} : { line1: "Choose a pickup location to continue." });
+      if (!ok) setFocusRequest({ id: "checkout-pickup-first" });
       return ok;
     }
     const errors: Partial<Record<keyof DeliveryAddress, string>> = {};
@@ -83,7 +133,9 @@ export default function CheckoutPage() {
     if (!address.city.trim()) errors.city = "City is required.";
     if (!isValidZip(address.zip)) errors.zip = "Enter a valid ZIP code.";
     setAddressErrors(errors);
-    return Object.keys(errors).length === 0;
+    const invalid = firstInvalidId(errors, ADDRESS_FIELD_IDS);
+    if (invalid) setFocusRequest({ id: invalid });
+    return !invalid;
   }
 
   function validatePayment(): boolean {
@@ -94,7 +146,9 @@ export default function CheckoutPage() {
     if (!isValidExpiry(card.expiry)) errors.expiry = "Enter a valid, unexpired date (MM/YY).";
     if (!isValidCvc(card.cvc)) errors.cvc = "Enter a valid CVC.";
     setCardErrors(errors);
-    return Object.keys(errors).length === 0;
+    const invalid = firstInvalidId(errors, CARD_FIELD_IDS);
+    if (invalid) setFocusRequest({ id: invalid });
+    return !invalid;
   }
 
   function goNext() {
@@ -173,7 +227,10 @@ export default function CheckoutPage() {
                   errors={addressErrors}
                   onAddressChange={setAddress}
                   pickupLocationId={cart.pickupLocationId}
-                  onPickupLocationChange={cart.setPickupLocation}
+                  onPickupLocationChange={(id) => {
+                    cart.setPickupLocation(id);
+                    setAddressErrors({});
+                  }}
                 />
               )}
               {step === 4 && (
@@ -207,7 +264,6 @@ export default function CheckoutPage() {
                 variant="primary"
                 size="md"
                 onClick={goNext}
-                disabled={step === 3 && !canContinueFromAddress}
                 icon={<ArrowRight size={16} />}
                 iconPosition="right"
               >

@@ -23,36 +23,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
-
-const USER_STORAGE_KEY = "ember.user.v1";
-
-export interface SavedUserProfile {
-  name: string;
-  phone: string;
-  email: string;
-  line1: string;
-  city: string;
-  zip: string;
-}
-
-export function getSavedUserProfile(): SavedUserProfile {
-  try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    return raw
-      ? JSON.parse(raw)
-      : { name: "", phone: "", email: "", line1: "", city: "", zip: "" };
-  } catch {
-    return { name: "", phone: "", email: "", line1: "", city: "", zip: "" };
-  }
-}
-
-export function saveUserProfile(profile: SavedUserProfile) {
-  try {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
-  } catch {
-    // Ignore if localStorage unavailable
-  }
-}
+import { getSavedUserProfile, saveUserProfile, SavedUserProfile } from "@/lib/user-profile";
 
 export function AccountModal() {
   const { isOpen, closeAccount, initialTab } = useAccountModal();

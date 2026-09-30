@@ -69,11 +69,14 @@ function ProductModalPanel({
   const imageWrapRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<SelectionState>(() => defaultSelection(product.optionGroups));
   const [quantity, setQuantity] = useState(1);
+  // Required groups the user tried to skip; cleared per group once they pick something.
+  const [missingGroups, setMissingGroups] = useState<string[]>([]);
 
   const unitPrice = useMemo(() => computeUnitPrice(product, selection), [product, selection]);
   const complete = isSelectionComplete(product, selection);
 
   function toggleChoice(groupId: string, choiceId: string, type: "single" | "multi", max?: number) {
+    setMissingGroups((prev) => prev.filter((id) => id !== groupId));
     setSelection((prev) => {
       const current = prev[groupId] ?? [];
       if (type === "single") {
@@ -91,7 +94,16 @@ function ProductModalPanel({
   }
 
   function handleAddToCart() {
-    if (!complete) return;
+    if (!complete) {
+      const missing = product.optionGroups
+        .filter((g) => g.required && (selection[g.id]?.length ?? 0) === 0)
+        .map((g) => g.id);
+      setMissingGroups(missing);
+      const first = document.getElementById(`option-group-${missing[0]}`);
+      first?.scrollIntoView({ block: "center", behavior: shouldReduceMotion ? "auto" : "smooth" });
+      first?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+      return;
+    }
     launch(imageWrapRef.current, product.image);
     addItem({
       productId: product.id,
@@ -175,10 +187,19 @@ function ProductModalPanel({
 
           <div className="mt-6 flex flex-col gap-6">
             {product.optionGroups.map((group) => (
-              <fieldset key={group.id}>
+              <fieldset
+                key={group.id}
+                id={`option-group-${group.id}`}
+                aria-describedby={missingGroups.includes(group.id) ? `option-group-${group.id}-error` : undefined}
+              >
                 <legend className="mb-2.5 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-cream">
                   {group.label}
-                  {group.required && <span className="text-ember-text">*</span>}
+                  {group.required && (
+                    <>
+                      <span aria-hidden="true" className="text-ember-text">*</span>
+                      <span className="sr-only">(required)</span>
+                    </>
+                  )}
                   {group.type === "multi" && group.max && (
                     <span className="font-body text-[11px] font-normal normal-case text-cream/60">
                       choose up to {group.max}
@@ -213,6 +234,15 @@ function ProductModalPanel({
                     );
                   })}
                 </div>
+                {missingGroups.includes(group.id) && (
+                  <p
+                    id={`option-group-${group.id}-error`}
+                    role="alert"
+                    className="mt-2 text-xs font-semibold text-ember-text"
+                  >
+                    Choose an option for {group.label} to continue.
+                  </p>
+                )}
               </fieldset>
             ))}
           </div>
@@ -224,7 +254,6 @@ function ProductModalPanel({
             variant="primary"
             size="md"
             className="min-w-0 flex-1 justify-between py-3.5 sm:px-8 sm:py-4 sm:text-base"
-            disabled={!complete}
             onClick={handleAddToCart}
           >
             <span className="truncate">{complete ? "Add to Cart" : "Select options"}</span>
