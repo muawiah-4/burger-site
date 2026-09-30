@@ -48,7 +48,7 @@ export function DealsSection() {
                   <p className="mt-1 text-sm text-cream/60">{deal.description}</p>
                   <ul className="mt-3 flex flex-col gap-1">
                     {deal.includes.map((inc) => (
-                      <li key={inc} className="text-xs text-cream/50">
+                      <li key={inc} className="text-xs text-cream/60">
                         · {inc}
                       </li>
                     ))}
@@ -57,7 +57,7 @@ export function DealsSection() {
                     <span className="font-display text-2xl font-extrabold text-cream">
                       {formatPrice(deal.price)}
                     </span>
-                    <span className="pb-0.5 text-sm text-cream/40 line-through">
+                    <span className="pb-0.5 text-sm text-cream/60 line-through">
                       {formatPrice(deal.originalPrice)}
                     </span>
                   </div>

@@ -86,7 +86,7 @@ export function CartDrawer() {
                               type="button"
                               aria-label={`Remove ${item.name}`}
                               onClick={() => removeItem(item.cartItemId)}
-                              className="focus-ring shrink-0 text-cream/60 transition active:scale-90 hover:text-ember"
+                              className="focus-ring shrink-0 text-cream/60 transition active:scale-90 hover:text-ember-text"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -197,11 +197,11 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   return (
     <div className="flex items-center justify-between text-cream/60">
       <span>{label}</span>
-      <span className={accent ? "font-semibold text-ember" : "text-cream"}>{value}</span>
+      <span className={accent ? "font-semibold text-ember-text" : "text-cream"}>{value}</span>
     </div>
   );
 }
 
 function cnMsg(valid: boolean) {
-  return valid ? "mb-3 text-xs font-semibold text-emerald-400" : "mb-3 text-xs font-semibold text-ember";
+  return valid ? "mb-3 text-xs font-semibold text-emerald-400" : "mb-3 text-xs font-semibold text-ember-text";
 }

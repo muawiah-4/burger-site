@@ -26,7 +26,7 @@ export function Newsletter() {
       <p className="mt-3 text-sm text-cream/60">New drops. Better deals. Zero spam.</p>
 
       {submitted ? (
-        <p className="mt-6 font-display text-sm font-bold text-ember">You&apos;re in. Watch your inbox.</p>
+        <p className="mt-6 font-display text-sm font-bold text-ember-text">You&apos;re in. Watch your inbox.</p>
       ) : (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <label htmlFor="newsletter-email" className="sr-only">
@@ -45,7 +45,7 @@ export function Newsletter() {
           </Button>
         </form>
       )}
-      {error && <p className="mt-2 text-xs font-semibold text-ember">{error}</p>}
+      {error && <p className="mt-2 text-xs font-semibold text-ember-text">{error}</p>}
     </section>
   );
 }

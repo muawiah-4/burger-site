@@ -81,7 +81,7 @@ export function AppDownloadModal({
               </button>
 
               <div className="text-center">
-                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ember/10 text-ember">
+                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ember/10 text-ember-text">
                   <Smartphone size={24} />
                 </span>
                 <h2 id="app-download-title" className="mt-3 font-display text-2xl font-extrabold tracking-tight text-cream">
@@ -137,7 +137,7 @@ export function AppDownloadModal({
                     </Button>
                   </form>
                 )}
-                {error && <p className="mt-1.5 text-center text-xs text-ember font-semibold">{error}</p>}
+                {error && <p className="mt-1.5 text-center text-xs text-ember-text font-semibold">{error}</p>}
               </div>
 
               {installed ? (
@@ -156,7 +156,7 @@ export function AppDownloadModal({
                   <button
                     type="button"
                     onClick={() => setInstalled(true)}
-                    className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-full bg-charcoal py-2 text-xs font-bold text-cream transition hover:bg-ember"
+                    className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-full bg-charcoal py-2 text-xs font-bold text-cream transition hover:bg-ember-fill"
                   >
                     <Sparkles size={13} /> Install PWA
                   </button>

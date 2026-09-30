@@ -51,7 +51,7 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   return (
     <div className="flex items-center justify-between text-cream/60">
       <span>{label}</span>
-      <span className={accent ? "font-semibold text-ember" : "text-cream"}>{value}</span>
+      <span className={accent ? "font-semibold text-ember-text" : "text-cream"}>{value}</span>
     </div>
   );
 }

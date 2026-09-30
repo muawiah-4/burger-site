@@ -24,7 +24,7 @@ export function About() {
         </motion.div>
 
         <div>
-          <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember">About Ember</p>
+          <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember-text">About Ember</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-cream sm:text-4xl lg:text-5xl">
             FAST FOOD DESERVED BETTER.
           </h2>

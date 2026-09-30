@@ -5,7 +5,7 @@ import { Badge as BadgeType } from "@/types";
 const styles: Record<BadgeType, string> = {
   "best-seller": "bg-gold text-charcoal",
   new: "bg-charcoal text-cream",
-  spicy: "bg-ember text-cream",
+  spicy: "bg-ember-fill text-cream",
   veggie: "bg-basil text-cream",
 };
 

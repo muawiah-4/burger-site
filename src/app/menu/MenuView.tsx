@@ -101,7 +101,7 @@ export function MenuView() {
   return (
     <div className="mx-auto max-w-7xl px-5 pb-28 pt-28 sm:px-8 sm:pt-32">
       <div className="text-center">
-        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember">Order Now</p>
+        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember-text">Order Now</p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-cream sm:text-5xl">
           THE MENU
         </h1>
@@ -253,7 +253,7 @@ function CategoryChip({
       aria-pressed={active}
       className={cn(
         "focus-ring flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-display font-bold uppercase tracking-wide transition-all active:scale-95",
-        active ? "bg-ember text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60 hover:text-cream"
+        active ? "bg-ember-fill text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60 hover:text-cream"
       )}
     >
       {children}
@@ -279,7 +279,7 @@ function ToggleChip({
       aria-pressed={active}
       className={cn(
         "focus-ring flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-95",
-        active ? "bg-ember text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60 hover:text-cream"
+        active ? "bg-ember-fill text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60 hover:text-cream"
       )}
     >
       {icon}

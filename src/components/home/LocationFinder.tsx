@@ -98,7 +98,7 @@ export function LocationFinder() {
               aria-pressed={fulfillment === mode}
               className={
                 "focus-ring flex-1 rounded-full px-5 py-3 font-display text-xs font-bold uppercase tracking-wider transition-all active:scale-95 " +
-                (fulfillment === mode ? "bg-ember text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60")
+                (fulfillment === mode ? "bg-ember-fill text-cream" : "border border-cream/10 bg-charcoal-raised text-cream/60")
               }
             >
               {mode}
@@ -145,7 +145,7 @@ export function LocationFinder() {
                 <div className="flex items-center gap-2">
                   <p className="font-display text-base font-extrabold text-cream">{loc.name}</p>
                   {isNearest && (
-                    <span className="rounded-full bg-ember px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cream">
+                    <span className="rounded-full bg-ember-fill px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cream">
                       Nearest
                     </span>
                   )}

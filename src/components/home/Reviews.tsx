@@ -13,7 +13,7 @@ export function Reviews() {
             className="flex w-[80vw] shrink-0 snap-start flex-col gap-3 rounded-3xl border border-cream/10 bg-charcoal-raised p-5 sm:w-auto"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember/10 font-display text-xs font-bold text-ember">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember/10 font-display text-xs font-bold text-ember-text">
                 {review.initials}
               </div>
               <div>

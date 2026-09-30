@@ -15,7 +15,8 @@ interface BaseProps {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-ember text-cream hover:bg-ember-dark active:scale-[0.98]",
+  primary:
+    "bg-ember-fill text-cream hover:bg-ember-dark hover:shadow-[0_0_24px_rgba(227,64,31,0.45)] active:scale-[0.98]",
   secondary: "bg-charcoal-raised text-cream hover:bg-charcoal-soft active:scale-[0.98]",
   ghost: "bg-transparent text-cream hover:bg-cream/5 active:scale-[0.98]",
   outline: "bg-transparent border border-cream/20 text-cream hover:border-cream active:scale-[0.98]",

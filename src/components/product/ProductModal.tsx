@@ -156,7 +156,7 @@ function ProductModalPanel({
           <div className="mt-2 flex items-center gap-3">
             <RatingStars rating={product.rating} reviewCount={product.reviewCount} />
             <span className="text-xs text-cream/60">·</span>
-            <span className="font-display text-sm font-bold text-ember">{formatPrice(product.price)} base</span>
+            <span className="font-display text-sm font-bold text-ember-text">{formatPrice(product.price)} base</span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-cream/70">{product.description}</p>
 
@@ -178,7 +178,7 @@ function ProductModalPanel({
               <fieldset key={group.id}>
                 <legend className="mb-2.5 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-cream">
                   {group.label}
-                  {group.required && <span className="text-ember">*</span>}
+                  {group.required && <span className="text-ember-text">*</span>}
                   {group.type === "multi" && group.max && (
                     <span className="font-body text-[11px] font-normal normal-case text-cream/60">
                       choose up to {group.max}
@@ -198,7 +198,7 @@ function ProductModalPanel({
                         className={cn(
                           "focus-ring flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all",
                           active
-                            ? "border-ember bg-ember text-cream"
+                            ? "border-ember bg-ember-fill text-cream"
                             : "border-cream/15 bg-charcoal-raised text-cream hover:border-cream/30"
                         )}
                       >

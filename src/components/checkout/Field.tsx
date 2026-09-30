@@ -23,14 +23,14 @@ export function Field({ label, error, className, id, ...rest }: FieldProps) {
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
         className={cn(
-          "focus-ring rounded-2xl border bg-charcoal-raised px-4 py-3 text-sm text-cream placeholder:text-cream/60",
+          "focus-ring rounded-2xl border bg-charcoal-raised px-4 py-3 text-sm text-cream placeholder:text-cream/40",
           error ? "border-ember" : "border-cream/15",
           className
         )}
         {...rest}
       />
       {error && (
-        <p id={`${inputId}-error`} className="text-xs font-semibold text-ember">
+        <p id={`${inputId}-error`} className="text-xs font-semibold text-ember-text">
           {error}
         </p>
       )}

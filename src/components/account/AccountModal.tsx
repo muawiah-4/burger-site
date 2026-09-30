@@ -158,7 +158,7 @@ export function AccountModal() {
                 onClick={() => setActiveTab("orders")}
                 className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
                   activeTab === "orders"
-                    ? "border-ember text-ember"
+                    ? "border-ember text-ember-text"
                     : "border-transparent text-cream/60 hover:text-cream"
                 }`}
               >
@@ -170,7 +170,7 @@ export function AccountModal() {
                 onClick={() => setActiveTab("profile")}
                 className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
                   activeTab === "profile"
-                    ? "border-ember text-ember"
+                    ? "border-ember text-ember-text"
                     : "border-transparent text-cream/60 hover:text-cream"
                 }`}
               >
@@ -182,7 +182,7 @@ export function AccountModal() {
                 onClick={() => setActiveTab("rewards")}
                 className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
                   activeTab === "rewards"
-                    ? "border-ember text-ember"
+                    ? "border-ember text-ember-text"
                     : "border-transparent text-cream/60 hover:text-cream"
                 }`}
               >
@@ -277,7 +277,7 @@ export function AccountModal() {
                               <Link
                                 href={`/order/${order.id}`}
                                 onClick={closeAccount}
-                                className="focus-ring flex items-center justify-center gap-1.5 rounded-full border border-cream/15 bg-charcoal-soft py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:bg-ember hover:text-cream"
+                                className="focus-ring flex items-center justify-center gap-1.5 rounded-full border border-cream/15 bg-charcoal-soft py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:bg-ember-fill hover:text-cream"
                               >
                                 <span>Track Order Live</span>
                                 <ExternalLink size={13} />
@@ -300,33 +300,39 @@ export function AccountModal() {
                     </h3>
                     <div className="mt-3 flex flex-col gap-3">
                       <div>
-                        <label className="text-[11px] font-bold text-cream">Full Name</label>
+                        <label htmlFor="acct-name" className="text-[11px] font-bold text-cream">Full Name</label>
                         <input
                           type="text"
+                          id="acct-name"
+                          autoComplete="name"
                           value={profile.name}
                           onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                           placeholder="e.g. Alex Morgan"
-                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold text-cream">Phone Number</label>
+                        <label htmlFor="acct-phone" className="text-[11px] font-bold text-cream">Phone Number</label>
                         <input
                           type="tel"
+                          id="acct-phone"
+                          autoComplete="tel"
                           value={profile.phone}
                           onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                           placeholder="e.g. (555) 234-5678"
-                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold text-cream">Email Address</label>
+                        <label htmlFor="acct-email" className="text-[11px] font-bold text-cream">Email Address</label>
                         <input
                           type="email"
+                          id="acct-email"
+                          autoComplete="email"
                           value={profile.email}
                           onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                           placeholder="alex@example.com"
-                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                         />
                       </div>
                     </div>
@@ -338,34 +344,40 @@ export function AccountModal() {
                     </h3>
                     <div className="mt-3 flex flex-col gap-3">
                       <div>
-                        <label className="text-[11px] font-bold text-cream">Street Address</label>
+                        <label htmlFor="acct-line1" className="text-[11px] font-bold text-cream">Street Address</label>
                         <input
                           type="text"
+                          id="acct-line1"
+                          autoComplete="street-address"
                           value={profile.line1}
                           onChange={(e) => setProfile({ ...profile, line1: e.target.value })}
                           placeholder="123 Main St, Apt 4B"
-                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                          className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[11px] font-bold text-cream">City</label>
+                          <label htmlFor="acct-city" className="text-[11px] font-bold text-cream">City</label>
                           <input
                             type="text"
-                            value={profile.city}
+                            id="acct-city"
+                          autoComplete="address-level2"
+                          value={profile.city}
                             onChange={(e) => setProfile({ ...profile, city: e.target.value })}
                             placeholder="New York"
-                            className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                            className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-bold text-cream">ZIP Code</label>
+                          <label htmlFor="acct-zip" className="text-[11px] font-bold text-cream">ZIP Code</label>
                           <input
                             type="text"
-                            value={profile.zip}
+                            id="acct-zip"
+                          autoComplete="postal-code"
+                          value={profile.zip}
                             onChange={(e) => setProfile({ ...profile, zip: e.target.value })}
                             placeholder="10001"
-                            className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream"
+                            className="focus-ring mt-1 w-full rounded-xl border border-cream/15 bg-charcoal-soft/50 px-3.5 py-2 text-xs text-cream placeholder:text-cream/40"
                           />
                         </div>
                       </div>
@@ -412,7 +424,7 @@ export function AccountModal() {
                       <div className="h-1.5 w-full rounded-full bg-cream/15">
                         <div className="h-1.5 rounded-full bg-ember" style={{ width: "75%" }} />
                       </div>
-                      <div className="mt-1.5 flex justify-between text-[11px] text-cream/50">
+                      <div className="mt-1.5 flex justify-between text-[11px] text-cream/60">
                         <span>50 pts to Free Smash Burger</span>
                         <span>500 pts</span>
                       </div>
@@ -454,7 +466,7 @@ export function AccountModal() {
                           <button
                             type="button"
                             onClick={() => handleCopyCode(promo.code)}
-                            className="focus-ring flex items-center gap-1 rounded-full border border-cream/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cream transition active:scale-95 hover:border-ember hover:text-ember"
+                            className="focus-ring flex items-center gap-1 rounded-full border border-cream/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cream transition active:scale-95 hover:border-ember hover:text-ember-text"
                           >
                             {copiedCode === promo.code ? (
                               <>

@@ -43,7 +43,7 @@ export function HowItWorks() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cream/10 text-gold">
                   <Icon size={26} />
                 </div>
-                <span className="mt-4 font-display text-xs font-bold tracking-widest text-cream/50">
+                <span className="mt-4 font-display text-xs font-bold tracking-widest text-cream/60">
                   {step.number}
                 </span>
                 <h3 className="mt-1 font-display text-xl font-extrabold text-cream">{step.title}</h3>

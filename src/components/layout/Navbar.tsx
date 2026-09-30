@@ -82,7 +82,7 @@ export function Navbar() {
               <Link
                 href={link.href}
                 className={cn(
-                  "focus-ring font-display text-xs font-bold uppercase tracking-wider transition-colors hover:text-ember",
+                  "focus-ring font-display text-xs font-bold uppercase tracking-wider transition-colors hover:text-ember-text",
                   textTone
                 )}
               >
@@ -96,7 +96,7 @@ export function Navbar() {
           <Link
             href="/menu?focus=search"
             aria-label="Search menu"
-            className={cn("focus-ring transition-all active:scale-90 hover:text-ember", textTone)}
+            className={cn("focus-ring transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <Search size={19} />
           </Link>
@@ -104,7 +104,7 @@ export function Navbar() {
             type="button"
             aria-label="Account"
             onClick={openAccount}
-            className={cn("focus-ring transition-all active:scale-90 hover:text-ember", textTone)}
+            className={cn("focus-ring transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <User size={19} />
           </button>
@@ -112,13 +112,13 @@ export function Navbar() {
             ref={registerCartIcon}
             aria-label={`Cart, ${itemCount} items`}
             onClick={openCart}
-            className={cn("focus-ring relative transition-all active:scale-90 hover:text-ember", textTone)}
+            className={cn("focus-ring relative transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
             <ShoppingBag size={19} />
             {itemCount > 0 && (
               <motion.span
                 animate={badgeControls}
-                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember px-1 text-[10px] font-bold text-cream"
+                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
               </motion.span>
@@ -140,7 +140,7 @@ export function Navbar() {
             {itemCount > 0 && (
               <motion.span
                 animate={badgeControls}
-                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember px-1 text-[10px] font-bold text-cream"
+                className="absolute -right-2 -top-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] font-bold text-cream"
               >
                 {itemCount}
               </motion.span>

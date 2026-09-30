@@ -102,7 +102,7 @@ export function AppPromo() {
                     </span>
                   </div>
                   <p className="text-center font-display text-sm font-extrabold text-cream">Ember Rewards</p>
-                  <p className="text-center text-[11px] text-cream/50">Scan to earn double points</p>
+                  <p className="text-center text-[11px] text-cream/60">Scan to earn double points</p>
                 </div>
 
                 {/* Promo chip */}

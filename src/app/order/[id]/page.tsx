@@ -44,7 +44,7 @@ export default function OrderPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 pb-28 pt-28 sm:px-8 sm:pt-32">
       <div className="text-center">
-        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-ember/10 text-ember">
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-ember/10 text-ember-text">
           <CheckCircle2 size={32} />
         </span>
         <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">
@@ -53,7 +53,7 @@ export default function OrderPage() {
         <p className="mt-2 text-sm text-cream/60">
           Order <span className="font-display font-bold text-cream">#{orderDisplayNumber(order)}</span>
         </p>
-        <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember">
+        <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember-text">
           <Clock size={14} /> Estimated {order.estimatedMinutes[0]}–{order.estimatedMinutes[1]} min
         </p>
       </div>

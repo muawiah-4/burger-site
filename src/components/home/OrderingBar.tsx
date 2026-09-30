@@ -39,14 +39,14 @@ export function OrderingBar() {
             <Link
               key={cat.id}
               href={`/menu?category=${cat.id}`}
-              className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full border border-cream/10 bg-charcoal-raised px-4 py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:text-ember"
+              className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full border border-cream/10 bg-charcoal-raised px-4 py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:text-ember-text"
             >
               {cat.name}
             </Link>
           ))}
           <Link
             href="/menu?category=deals"
-            className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full border border-ember/30 bg-ember/10 px-4 py-2 text-xs font-bold text-ember transition-colors hover:bg-ember hover:text-cream"
+            className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full border border-ember/30 bg-ember/10 px-4 py-2 text-xs font-bold text-ember-text transition-colors hover:bg-ember-fill hover:text-cream"
           >
             <Flame size={13} className="fill-current" />
             Deals

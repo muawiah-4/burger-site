@@ -61,7 +61,7 @@ export function AddressStep({
             );
           })}
         </div>
-        {errors.line1 && <p className="mt-2 text-xs font-semibold text-ember">{errors.line1}</p>}
+        {errors.line1 && <p className="mt-2 text-xs font-semibold text-ember-text">{errors.line1}</p>}
       </div>
     );
   }

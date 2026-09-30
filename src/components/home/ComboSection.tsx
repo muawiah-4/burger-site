@@ -31,7 +31,7 @@ function PillGroup({
 }) {
   return (
     <div>
-      <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wide text-cream/50">{label}</p>
+      <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wide text-cream/60">{label}</p>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => {
           const active = item.id === selectedId;
@@ -44,7 +44,7 @@ function PillGroup({
               className={cn(
                 "focus-ring rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
                 active
-                  ? "border-ember bg-ember text-cream"
+                  ? "border-ember bg-ember-fill text-cream"
                   : "border-cream/15 bg-charcoal-raised text-cream hover:border-cream/30"
               )}
             >

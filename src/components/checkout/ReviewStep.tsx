@@ -98,7 +98,7 @@ function ReviewRow({
         type="button"
         onClick={onEdit}
         aria-label={`Edit ${title}`}
-        className="focus-ring flex shrink-0 items-center gap-1 text-xs font-semibold text-ember hover:underline"
+        className="focus-ring flex shrink-0 items-center gap-1 text-xs font-semibold text-ember-text hover:underline"
       >
         <Pencil size={12} /> Edit
       </button>

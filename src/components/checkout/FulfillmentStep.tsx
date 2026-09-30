@@ -43,7 +43,7 @@ export function FulfillmentStep({
               <span
                 className={cn(
                   "flex h-12 w-12 items-center justify-center rounded-full",
-                  active ? "bg-ember text-cream" : "bg-cream/5 text-cream"
+                  active ? "bg-ember-fill text-cream" : "bg-cream/5 text-cream"
                 )}
               >
                 <Icon size={22} />
