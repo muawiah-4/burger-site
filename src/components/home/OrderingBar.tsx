@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { Bike, ShoppingBag, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/context/cart-context";
+import { useCartActions, useCartState } from "@/context/cart-context";
 import { categories } from "@/lib/data/categories";
 
 export function OrderingBar() {
-  const { fulfillment, setFulfillment } = useCart();
+  const { fulfillment } = useCartState();
+  const { setFulfillment } = useCartActions();
 
   return (
     <section className="relative z-10 -mt-8 px-5 sm:-mt-10 sm:px-8">

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import * as m from "motion/react-m";
 import { Plus } from "lucide-react";
@@ -7,9 +8,11 @@ import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { Badge } from "@/components/ui/Badge";
-import { useProductModal } from "@/context/product-modal-context";
+import { useProductModalActions } from "@/context/product-modal-context";
 
-export function ProductCard({
+// Memoised: grids re-render on every filter keystroke, but a card only changes
+// when its own product/preload/index props do.
+export const ProductCard = memo(function ProductCard({
   product,
   preload = false,
   index = 0,
@@ -19,7 +22,7 @@ export function ProductCard({
   preload?: boolean;
   index?: number;
 }) {
-  const { open } = useProductModal();
+  const { open } = useProductModalActions();
   const primaryBadge = product.badges?.[0];
 
   return (
@@ -70,4 +73,4 @@ export function ProductCard({
       </div>
     </m.button>
   );
-}
+});

@@ -7,7 +7,7 @@ import { Deal } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { DEAL_PRODUCT_PREFIX } from "@/lib/cart";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/cart-context";
+import { useCartActions } from "@/context/cart-context";
 
 /** The slice of a product the combo builder needs; the server passes only these. */
 export interface ComboChoice {
@@ -78,7 +78,7 @@ export function ComboCard({
   category: "burgers" | "pizza";
   reverse?: boolean;
 }) {
-  const { addItem } = useCart();
+  const { addItem } = useCartActions();
   const [itemId, setItemId] = useState(items[0].id);
   const [drinkId, setDrinkId] = useState(drinks[0].id);
 

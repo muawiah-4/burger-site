@@ -2,7 +2,7 @@
 
 import { CartItem } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/cart-context";
+import { useCartActions } from "@/context/cart-context";
 
 /**
  * Client leaf for Server Components that only need an "add this line" button. The
@@ -21,7 +21,7 @@ export function AddToCartButton({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const { addItem } = useCart();
+  const { addItem } = useCartActions();
   return (
     <Button variant={variant} size={size} className={className} onClick={() => addItem(item)}>
       {children}

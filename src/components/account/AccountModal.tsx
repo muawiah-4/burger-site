@@ -23,14 +23,14 @@ import { getAllOrders, deriveStatus, orderDisplayNumber, ORDER_RETENTION_DAYS, M
 import { clearAllLocalData } from "@/lib/local-data";
 import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
-import { useCart } from "@/context/cart-context";
+import { useCartActions } from "@/context/cart-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
 import { getSavedUserProfile, saveUserProfile, SavedUserProfile } from "@/lib/user-profile";
 
 export function AccountModal() {
   const { isOpen, closeAccount, initialTab } = useAccountModal();
-  const { applyPromo, openCart, resetCart } = useCart();
+  const { applyPromo, openCart, resetCart } = useCartActions();
   const shouldReduceMotion = useReducedMotion();
   const dialogRef = useDialog<HTMLElement>(isOpen, closeAccount);
 

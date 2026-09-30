@@ -12,7 +12,7 @@ import { CategoryId, Product } from "@/types";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { cn, formatPrice } from "@/lib/utils";
 import { buildDealCartItem } from "@/lib/cart";
-import { useCart } from "@/context/cart-context";
+import { useCartActions } from "@/context/cart-context";
 import { Button } from "@/components/ui/Button";
 import { LayoutMotion } from "@/components/providers/LayoutMotion";
 
@@ -55,7 +55,7 @@ export function MenuView() {
   const [spicyOnly, setSpicyOnly] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { addItem } = useCart();
+  const { addItem } = useCartActions();
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {

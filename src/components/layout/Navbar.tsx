@@ -7,8 +7,8 @@ import { AnimatePresence, useAnimationControls, useReducedMotion } from "motion/
 import * as m from "motion/react-m";
 import { Search, User, ShoppingBag, Menu as MenuIcon, X, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/context/cart-context";
-import { useFlyToCart } from "@/context/fly-to-cart-context";
+import { useCartActions, useCartState } from "@/context/cart-context";
+import { useFlyToCartActions, useLandSignal } from "@/context/fly-to-cart-context";
 import { useAccountModal } from "@/context/account-modal-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
@@ -23,9 +23,11 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { itemCount, openCart } = useCart();
+  const { itemCount } = useCartState();
+  const { openCart } = useCartActions();
   const { openAccount } = useAccountModal();
-  const { registerCartIcon, registerMobileCartIcon, landSignal } = useFlyToCart();
+  const { registerCartIcon, registerMobileCartIcon } = useFlyToCartActions();
+  const landSignal = useLandSignal();
   const pathname = usePathname();
   const badgeControls = useAnimationControls();
   const shouldReduceMotion = useReducedMotion();

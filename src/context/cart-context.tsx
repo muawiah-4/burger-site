@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -116,7 +115,7 @@ function isEmptyCart(state: CartState) {
   );
 }
 
-interface CartContextValue {
+export interface CartStateValue {
   items: CartItem[];
   fulfillment: FulfillmentMethod;
   pickupLocationId: string | null;
@@ -125,8 +124,11 @@ interface CartContextValue {
   promoValid: boolean;
   totals: Totals;
   itemCount: number;
-  isOpen: boolean;
   hydrated: boolean;
+}
+
+/** Stable for the provider's lifetime: consumers of these never re-render on cart changes. */
+export interface CartActions {
   openCart: () => void;
   closeCart: () => void;
   addItem: (item: Omit<CartItem, "cartItemId">) => void;
@@ -141,7 +143,13 @@ interface CartContextValue {
   clearPromo: () => void;
 }
 
-const CartContext = createContext<CartContextValue | null>(null);
+type CartContextValue = CartStateValue & CartActions & { isOpen: boolean };
+
+// Three contexts so a consumer only re-renders for what it reads: the cart
+// contents, whether the drawer is open, or (never) the action functions.
+const CartStateContext = createContext<CartStateValue | null>(null);
+const CartOpenContext = createContext<boolean | null>(null);
+const CartActionsContext = createContext<CartActions | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -219,47 +227,81 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [state.items]
   );
 
-  const addItem = useCallback((item: Omit<CartItem, "cartItemId">) => {
-    const selection: Record<string, string[]> = {};
-    for (const opt of item.selectedOptions) selection[opt.groupId] = opt.choiceIds;
-    const key = selectionKey(item.productId, selection);
-    dispatch({ type: "ADD_ITEM", item, key });
-    setIsOpen(true);
-  }, []);
+  const actions = useMemo<CartActions>(
+    () => ({
+      openCart: () => setIsOpen(true),
+      closeCart: () => setIsOpen(false),
+      addItem: (item) => {
+        const selection: Record<string, string[]> = {};
+        for (const opt of item.selectedOptions) selection[opt.groupId] = opt.choiceIds;
+        const key = selectionKey(item.productId, selection);
+        dispatch({ type: "ADD_ITEM", item, key });
+        setIsOpen(true);
+      },
+      removeItem: (cartItemId) => dispatch({ type: "REMOVE_ITEM", cartItemId }),
+      updateQuantity: (cartItemId, quantity) => dispatch({ type: "UPDATE_QUANTITY", cartItemId, quantity }),
+      clearCart: () => dispatch({ type: "CLEAR_CART" }),
+      resetCart: () => dispatch({ type: "RESET" }),
+      setFulfillment: (f) => dispatch({ type: "SET_FULFILLMENT", fulfillment: f }),
+      setPickupLocation: (locationId) => dispatch({ type: "SET_PICKUP_LOCATION", locationId }),
+      applyPromo: (code) => dispatch({ type: "SET_PROMO", code: code.trim().toUpperCase() }),
+      clearPromo: () => dispatch({ type: "SET_PROMO", code: "" }),
+    }),
+    []
+  );
 
-  const applyPromo = useCallback((code: string) => {
-    dispatch({ type: "SET_PROMO", code: code.trim().toUpperCase() });
-  }, []);
+  const cartState = useMemo<CartStateValue>(
+    () => ({
+      items: state.items,
+      fulfillment: state.fulfillment,
+      pickupLocationId: state.pickupLocationId,
+      promoCode: state.promoCode,
+      promoMessage: promoResult.message,
+      promoValid: promoResult.valid,
+      totals,
+      itemCount,
+      hydrated,
+    }),
+    [state, promoResult, totals, itemCount, hydrated]
+  );
 
-  const value: CartContextValue = {
-    items: state.items,
-    fulfillment: state.fulfillment,
-    pickupLocationId: state.pickupLocationId,
-    promoCode: state.promoCode,
-    promoMessage: promoResult.message,
-    promoValid: promoResult.valid,
-    totals,
-    itemCount,
-    isOpen,
-    hydrated,
-    openCart: () => setIsOpen(true),
-    closeCart: () => setIsOpen(false),
-    addItem,
-    removeItem: (cartItemId) => dispatch({ type: "REMOVE_ITEM", cartItemId }),
-    updateQuantity: (cartItemId, quantity) => dispatch({ type: "UPDATE_QUANTITY", cartItemId, quantity }),
-    clearCart: () => dispatch({ type: "CLEAR_CART" }),
-    resetCart: () => dispatch({ type: "RESET" }),
-    setFulfillment: (f) => dispatch({ type: "SET_FULFILLMENT", fulfillment: f }),
-    setPickupLocation: (locationId) => dispatch({ type: "SET_PICKUP_LOCATION", locationId }),
-    applyPromo,
-    clearPromo: () => dispatch({ type: "SET_PROMO", code: "" }),
-  };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartActionsContext.Provider value={actions}>
+      <CartStateContext.Provider value={cartState}>
+        <CartOpenContext.Provider value={isOpen}>{children}</CartOpenContext.Provider>
+      </CartStateContext.Provider>
+    </CartActionsContext.Provider>
+  );
 }
 
+function useRequired<T>(ctx: React.Context<T | null>, hook: string): T {
+  const value = useContext(ctx);
+  if (value === null) throw new Error(`${hook} must be used within CartProvider`);
+  return value;
+}
+
+/** Cart actions only. The object is stable, so this never causes a re-render. */
+export function useCartActions(): CartActions {
+  return useRequired(CartActionsContext, "useCartActions");
+}
+
+/** Cart contents, totals and promo state. Re-renders when the cart changes. */
+export function useCartState(): CartStateValue {
+  return useRequired(CartStateContext, "useCartState");
+}
+
+/** Whether the cart drawer is open. */
+export function useCartOpen(): boolean {
+  return useRequired(CartOpenContext, "useCartOpen");
+}
+
+/**
+ * Compatibility wrapper returning everything. It re-renders on any cart or drawer
+ * change; prefer the narrower hooks above in frequently rendered components.
+ */
 export function useCart(): CartContextValue {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
+  const actions = useCartActions();
+  const state = useCartState();
+  const isOpen = useCartOpen();
+  return useMemo(() => ({ ...state, ...actions, isOpen }), [state, actions, isOpen]);
 }

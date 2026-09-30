@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useCart } from "@/context/cart-context";
-import { useProductModal } from "@/context/product-modal-context";
+import { useCartOpen } from "@/context/cart-context";
+import { useOpenProduct } from "@/context/product-modal-context";
 import { useAccountModal } from "@/context/account-modal-context";
 import { useOpenedOnce } from "@/hooks/useOpenedOnce";
 
@@ -21,8 +21,8 @@ const Mascot = dynamic(() => import("@/components/layout/Mascot").then((m) => m.
 
 export function LazyOverlays() {
   const pathname = usePathname();
-  const cartOpened = useOpenedOnce(useCart().isOpen);
-  const productOpened = useOpenedOnce(useProductModal().product !== null);
+  const cartOpened = useOpenedOnce(useCartOpen());
+  const productOpened = useOpenedOnce(useOpenProduct() !== null);
   const accountOpened = useOpenedOnce(useAccountModal().isOpen);
 
   return (

@@ -7,8 +7,8 @@ import * as m from "motion/react-m";
 import { X, Check } from "lucide-react";
 import { Product } from "@/types";
 import { useProductModal } from "@/context/product-modal-context";
-import { useCart } from "@/context/cart-context";
-import { useFlyToCart } from "@/context/fly-to-cart-context";
+import { useCartActions } from "@/context/cart-context";
+import { useFlyToCartActions } from "@/context/fly-to-cart-context";
 import {
   buildSelectedOptions,
   computeUnitPrice,
@@ -65,8 +65,8 @@ function ProductModalPanel({
   close: () => void;
   shouldReduceMotion: boolean;
 }) {
-  const { addItem } = useCart();
-  const { launch } = useFlyToCart();
+  const { addItem } = useCartActions();
+  const { launch } = useFlyToCartActions();
   const imageWrapRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<SelectionState>(() => defaultSelection(product.optionGroups));
   const [quantity, setQuantity] = useState(1);

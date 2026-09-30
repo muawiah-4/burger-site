@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getImageProps } from "next/image";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
@@ -12,14 +12,21 @@ interface Flight {
   toRect: DOMRect;
 }
 
-interface FlyToCartContextValue {
+/** Stable for the provider's lifetime. */
+interface FlyToCartActions {
   registerCartIcon: (el: HTMLElement | null) => void;
   registerMobileCartIcon: (el: HTMLElement | null) => void;
   launch: (fromEl: HTMLElement | null, imgSrc: string) => void;
+}
+
+interface FlyToCartContextValue extends FlyToCartActions {
   landSignal: number;
 }
 
-const FlyToCartContext = createContext<FlyToCartContextValue | null>(null);
+// landSignal ticks on every landing; keeping it in its own context means only the
+// cart badge re-renders, not everything that can launch a flight.
+const FlyToCartContext = createContext<FlyToCartActions | null>(null);
+const LandSignalContext = createContext<number | null>(null);
 
 function pickVisibleTarget(a: HTMLElement | null, b: HTMLElement | null): HTMLElement | null {
   if (a && a.getClientRects().length > 0) return a;
@@ -33,6 +40,11 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [landSignal, setLandSignal] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  // Read through a ref so `launch` keeps one identity for the provider's lifetime.
+  const reduceMotionRef = useRef(shouldReduceMotion);
+  useEffect(() => {
+    reduceMotionRef.current = shouldReduceMotion;
+  }, [shouldReduceMotion]);
 
   const registerCartIcon = useCallback((el: HTMLElement | null) => {
     desktopIconRef.current = el;
@@ -46,7 +58,7 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
       const target = pickVisibleTarget(desktopIconRef.current, mobileIconRef.current);
       if (!fromEl || !target) return;
 
-      if (shouldReduceMotion) {
+      if (reduceMotionRef.current) {
         // Skip the flight animation, but still let the cart badge react.
         setLandSignal((s) => s + 1);
         return;
@@ -57,7 +69,7 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       setFlights((prev) => [...prev, { id, imgSrc: flightImageSrc(fromEl, imgSrc, fromRect.width), fromRect, toRect }]);
     },
-    [shouldReduceMotion]
+    []
   );
 
   const complete = useCallback((id: string) => {
@@ -65,14 +77,21 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
     setLandSignal((s) => s + 1);
   }, []);
 
+  const actions = useMemo(
+    () => ({ registerCartIcon, registerMobileCartIcon, launch }),
+    [registerCartIcon, registerMobileCartIcon, launch]
+  );
+
   return (
-    <FlyToCartContext.Provider value={{ registerCartIcon, registerMobileCartIcon, launch, landSignal }}>
-      {children}
-      <div aria-hidden="true">
-        {flights.map((flight) => (
-          <FlightImage key={flight.id} flight={flight} onDone={() => complete(flight.id)} />
-        ))}
-      </div>
+    <FlyToCartContext.Provider value={actions}>
+      <LandSignalContext.Provider value={landSignal}>
+        {children}
+        <div aria-hidden="true">
+          {flights.map((flight) => (
+            <FlightImage key={flight.id} flight={flight} onDone={() => complete(flight.id)} />
+          ))}
+        </div>
+      </LandSignalContext.Provider>
     </FlyToCartContext.Provider>
   );
 }
@@ -126,8 +145,23 @@ function FlightImage({ flight, onDone }: { flight: Flight; onDone: () => void })
   );
 }
 
-export function useFlyToCart(): FlyToCartContextValue {
+/** Register cart icons and launch flights. Stable: never causes a re-render. */
+export function useFlyToCartActions(): FlyToCartActions {
   const ctx = useContext(FlyToCartContext);
-  if (!ctx) throw new Error("useFlyToCart must be used within FlyToCartProvider");
+  if (!ctx) throw new Error("useFlyToCartActions must be used within FlyToCartProvider");
   return ctx;
+}
+
+/** Increments each time a flight lands (drives the cart badge punch). */
+export function useLandSignal(): number {
+  const signal = useContext(LandSignalContext);
+  if (signal === null) throw new Error("useLandSignal must be used within FlyToCartProvider");
+  return signal;
+}
+
+/** Compatibility wrapper returning actions plus landSignal. */
+export function useFlyToCart(): FlyToCartContextValue {
+  const actions = useFlyToCartActions();
+  const landSignal = useLandSignal();
+  return useMemo(() => ({ ...actions, landSignal }), [actions, landSignal]);
 }

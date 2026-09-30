@@ -6,7 +6,7 @@ import { MapPin, Clock, Search } from "lucide-react";
 import { locations } from "@/lib/data/locations";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/cart-context";
+import { useCartActions, useCartState } from "@/context/cart-context";
 
 // Great-circle distance in miles between two lat/lng points.
 function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -21,7 +21,8 @@ function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number):
 
 export function LocationFinder() {
   const router = useRouter();
-  const { fulfillment, setFulfillment, setPickupLocation } = useCart();
+  const { fulfillment } = useCartState();
+  const { setFulfillment, setPickupLocation } = useCartActions();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {

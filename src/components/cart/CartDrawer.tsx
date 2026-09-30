@@ -5,22 +5,16 @@ import Image from "next/image";
 import { AnimatePresence, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { X, Trash2, ShoppingBag, Tag } from "lucide-react";
-import { useCart } from "@/context/cart-context";
+import { useCartActions, useCartOpen, useCartState } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
 
 export function CartDrawer() {
-  const {
-    items,
-    isOpen,
-    closeCart,
-    removeItem,
-    updateQuantity,
-    totals,
-    promoCode,
-  } = useCart();
+  const { items, totals, promoCode } = useCartState();
+  const isOpen = useCartOpen();
+  const { closeCart, removeItem, updateQuantity } = useCartActions();
   const shouldReduceMotion = useReducedMotion();
   const dialogRef = useDialog<HTMLElement>(isOpen, closeCart);
 
@@ -160,7 +154,8 @@ export function CartDrawer() {
 }
 
 function PromoForm() {
-  const { promoCode, promoMessage, promoValid, applyPromo, clearPromo } = useCart();
+  const { promoCode, promoMessage, promoValid } = useCartState();
+  const { applyPromo, clearPromo } = useCartActions();
   const [promoInput, setPromoInput] = useState(promoCode);
 
   return (
