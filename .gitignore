@@ -22,7 +22,16 @@
 
 # misc
 .DS_Store
+
+# private keys and keystores (never commit these; see SECURITY.md)
 *.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
 
 # debug
 npm-debug.log*
