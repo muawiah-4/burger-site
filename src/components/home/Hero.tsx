@@ -3,7 +3,9 @@
 import { motion, type Transition } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
-import { HeroVideo } from "@/components/home/HeroVideo";
+import { AmbientVideo } from "@/components/ui/AmbientVideo";
+
+const HERO_POSTER = "/videos/hero-cooking-poster.webp";
 
 const easeOut: Transition["ease"] = [0.22, 1, 0.36, 1];
 
@@ -20,8 +22,15 @@ export function Hero() {
 
   return (
     <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-charcoal pb-16 pt-28 sm:min-h-[88vh] sm:pb-20 sm:pt-36">
+      {/* The poster is what paints first (and all phones get), so fetch it early. React hoists this into <head>. */}
+      <link rel="preload" as="image" href={HERO_POSTER} fetchPriority="high" />
       <div className="absolute inset-0">
-        <HeroVideo />
+        <AmbientVideo
+          webm="/videos/hero-cooking-720p.webm"
+          mp4="/videos/hero-cooking-720p.mp4"
+          poster={HERO_POSTER}
+          minWidth={768}
+        />
       </div>
       {/* Darkens the video toward the text so copy stays legible without cropping the footage itself. */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/55 to-charcoal/10" />

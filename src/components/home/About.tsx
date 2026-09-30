@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { LoopingVideo } from "@/components/ui/LoopingVideo";
+import { AmbientVideo } from "@/components/ui/AmbientVideo";
 
 const stats = [
   { value: "8", label: "Menu Categories" },
@@ -20,7 +20,11 @@ export function About() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem]"
         >
-          <LoopingVideo src="/videos/about-prep.mp4" ariaLabel="A cook placing a fresh beef patty into a hot cast-iron pan" />
+          <AmbientVideo
+            webm="/videos/about-prep-720p.webm"
+            mp4="/videos/about-prep-720p.mp4"
+            poster="/videos/about-prep-poster.webp"
+          />
         </motion.div>
 
         <div>
