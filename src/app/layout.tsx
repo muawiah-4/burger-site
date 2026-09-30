@@ -13,6 +13,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { ProductModal } from "@/components/product/ProductModal";
 import { AccountModal } from "@/components/account/AccountModal";
 import { MotionProvider } from "@/components/providers/MotionProvider";
+import { StorageMaintenance } from "@/components/providers/StorageMaintenance";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -51,6 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ProductModal />
                   <AccountModal />
                   <Mascot />
+                  <StorageMaintenance />
                 </AccountModalProvider>
               </ProductModalProvider>
             </FlyToCartProvider>
