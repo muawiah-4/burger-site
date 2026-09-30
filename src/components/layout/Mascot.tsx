@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { cn } from "@/lib/utils";
 
 const LINES = [
   "Craving something bold?",
@@ -14,6 +16,7 @@ const LINES = [
 
 export function Mascot() {
   const shouldReduceMotion = useReducedMotion();
+  const pathname = usePathname();
   const rootRef = useRef<HTMLDivElement>(null);
   const lineIndex = useRef(0);
   const timeouts = useRef<Set<number>>(new Set());
@@ -98,15 +101,30 @@ export function Mascot() {
     trackedTimeout(() => setMessage(null), 2600);
   }
 
+  // It floats over content: keep it off checkout (covers the step buttons and
+  // Place Order) and off the menu on phones (covers prices and "+" buttons).
+  if (pathname.startsWith("/checkout")) return null;
+  const hideOnMobile = pathname.startsWith("/menu");
+
   return (
     <div
       ref={rootRef}
-      className="fixed bottom-5 right-5 z-30 flex flex-col items-end gap-2 transition-opacity duration-300 sm:bottom-7 sm:right-7"
+      className={cn(
+        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-3 z-30 flex-col items-end gap-2 transition-opacity duration-300 sm:bottom-7 sm:right-7",
+        hideOnMobile ? "hidden sm:flex" : "flex"
+      )}
       style={nearFooter ? { opacity: 0, pointerEvents: "none" } : undefined}
+      // Faded out over the footer: also take it out of the tab order and AT tree.
+      inert={nearFooter}
     >
+      {/* The tip is visual; announce it through an always-mounted live region too. */}
+      <p role="status" className="sr-only">
+        {message}
+      </p>
       <AnimatePresence>
         {message && (
           <motion.div
+            aria-hidden="true"
             initial={{ opacity: 0, y: 6, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.92 }}
@@ -121,8 +139,8 @@ export function Mascot() {
       <motion.button
         type="button"
         onClick={handleClick}
-        aria-label="Ember's mascot — click for a tip"
-        className="focus-ring relative flex h-16 w-16 items-center justify-center rounded-full"
+        aria-label="Get a tip from Ember's mascot"
+        className="focus-ring relative flex h-11 w-11 items-center justify-center rounded-full sm:h-16 sm:w-16"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
         whileTap={{ scale: 0.92 }}
@@ -132,7 +150,7 @@ export function Mascot() {
           transition={{ duration: 0.45, ease: "easeInOut" }}
           className="drop-shadow-[0_8px_18px_rgba(0,0,0,0.5)]"
         >
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true" className="h-11 w-11 sm:h-16 sm:w-16">
             {/* bottom bun */}
             <path d="M9 41 Q9 54 32 54 Q55 54 55 41 L55 37 L9 37 Z" fill="#d99648" />
             {/* patty */}
