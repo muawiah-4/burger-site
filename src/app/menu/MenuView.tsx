@@ -24,12 +24,30 @@ const PRICE_OPTIONS = [
   { id: "under15", label: "Under $15", max: 15 },
 ];
 
+const CATEGORY_FILTERS = new Set<string>(["all", "deals", ...categories.map((c) => c.id)]);
+
+function parseCategory(value: string | null): CategoryFilter {
+  return value && CATEGORY_FILTERS.has(value) ? (value as CategoryFilter) : "all";
+}
+
 export function MenuView() {
   const searchParams = useSearchParams();
-  const initialCategory = (searchParams.get("category") as CategoryFilter) || "all";
+  // The URL is the source of truth, so back/forward and in-app links to
+  // /menu?category=… always match the selected chip. Unknown values fall back to "all".
+  const category = parseCategory(searchParams.get("category"));
+
+  function setCategory(next: CategoryFilter) {
+    if (next === category) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "all") params.delete("category");
+    else params.set("category", next);
+    params.delete("focus");
+    const query = params.toString();
+    // Native pushState integrates with the Next.js router and useSearchParams.
+    window.history.pushState(null, "", query ? `?${query}` : window.location.pathname);
+  }
 
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<CategoryFilter>(initialCategory);
   const [priceId, setPriceId] = useState("any");
   const [popularOnly, setPopularOnly] = useState(false);
   const [vegOnly, setVegOnly] = useState(false);
