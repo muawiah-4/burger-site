@@ -27,6 +27,7 @@ import { PaymentStep, CardDetails } from "@/components/checkout/PaymentStep";
 import { ReviewStep } from "@/components/checkout/ReviewStep";
 import { Button } from "@/components/ui/Button";
 import { PageLoading } from "@/components/ui/PageLoading";
+import { DemoNotice } from "@/components/ui/DemoNotice";
 
 const EMPTY_ADDRESS: DeliveryAddress = { line1: "", line2: "", city: "", zip: "", instructions: "" };
 const EMPTY_CUSTOMER: CustomerInfo = { name: "", phone: "", email: "" };
@@ -249,6 +250,9 @@ export default function CheckoutPage() {
       estimatedMinutes,
     };
     saveOrder(order);
+    // Card fields only ever live in this component's state and are never saved;
+    // drop them now rather than keeping them around while we navigate away.
+    setCard(EMPTY_CARD);
     cart.clearCart();
     router.push(`/order/${id}`);
   }
@@ -264,6 +268,7 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 pb-28 pt-28 sm:px-8 sm:pt-32">
       <h1 className="font-display text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">Checkout</h1>
+      <DemoNotice className="mt-4 max-w-2xl" />
 
       <div className="mt-8">
         <StepIndicator current={step} />

@@ -13,6 +13,7 @@ import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageLoading } from "@/components/ui/PageLoading";
+import { DemoNotice } from "@/components/ui/DemoNotice";
 
 export default function OrderPage() {
   const params = useParams<{ id: string }>();
@@ -58,6 +59,7 @@ export default function OrderPage() {
         <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember-text">
           <Clock size={14} /> Estimated {order.estimatedMinutes[0]}–{order.estimatedMinutes[1]} min
         </p>
+        <DemoNotice className="mx-auto mt-5 max-w-md" />
       </div>
 
       <div className="mt-10 rounded-3xl border border-cream/10 bg-charcoal-soft p-6 sm:p-8">

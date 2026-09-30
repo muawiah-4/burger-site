@@ -68,6 +68,15 @@ export function PaymentStep({
 
       {method === "card" && (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <p
+            id="checkout-cc-hint"
+            className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-cream sm:col-span-2"
+          >
+            <strong className="font-display font-bold text-gold">Don&apos;t enter a real card.</strong> This is a
+            demo and nothing is charged. Use the test number{" "}
+            <span className="whitespace-nowrap font-semibold tabular-nums">4242 4242 4242 4242</span>, any future
+            expiry and any 3-digit CVC.
+          </p>
           <Field
             id="checkout-cc-name"
             label="Name on Card"
@@ -84,6 +93,7 @@ export function PaymentStep({
             placeholder="4242 4242 4242 4242"
             inputMode="numeric"
             autoComplete="cc-number"
+            aria-describedby="checkout-cc-hint"
             value={card.number}
             error={errors.number}
             wrapperClassName="sm:col-span-2"
