@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Clock, MapPin } from "lucide-react";
 import { PlacedOrder } from "@/types";
-import { getOrder } from "@/lib/orders";
+import { getOrder, orderDisplayNumber } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
 import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
@@ -51,7 +51,7 @@ export default function OrderPage() {
           ORDER CONFIRMED
         </h1>
         <p className="mt-2 text-sm text-cream/60">
-          Order <span className="font-display font-bold text-cream">#{order.id}</span>
+          Order <span className="font-display font-bold text-cream">#{orderDisplayNumber(order)}</span>
         </p>
         <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember">
           <Clock size={14} /> Estimated {order.estimatedMinutes[0]}–{order.estimatedMinutes[1]} min

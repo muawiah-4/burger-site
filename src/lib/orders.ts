@@ -14,10 +14,29 @@ export function saveOrder(order: PlacedOrder): void {
   }
 }
 
+function isStoredOrder(value: unknown): value is PlacedOrder {
+  if (typeof value !== "object" || value === null) return false;
+  const o = value as Partial<PlacedOrder>;
+  return (
+    typeof o.id === "string" &&
+    typeof o.placedAt === "string" &&
+    Array.isArray(o.items) &&
+    Array.isArray(o.estimatedMinutes) &&
+    typeof o.total === "number"
+  );
+}
+
 export function getAllOrders(): Record<string, PlacedOrder> {
   try {
     const raw = localStorage.getItem(ORDERS_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, PlacedOrder>) : {};
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    // Skip malformed entries rather than crashing the tracker / account list.
+    const orders: Record<string, PlacedOrder> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (isStoredOrder(value)) orders[key] = value;
+    }
+    return orders;
   } catch {
     return {};
   }
@@ -40,9 +59,24 @@ function safeGet(key: string): string | null {
   }
 }
 
+/** Unique id used as the storage key and in /order/[id] URLs. */
 export function generateOrderId(): string {
-  const n = Math.floor(10000 + Math.random() * 89999);
-  return `${n}`;
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // randomUUID is only available in secure contexts (https / localhost).
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Short, human-friendly order number for display only — not guaranteed unique. */
+export function generateDisplayNumber(): string {
+  return `${Math.floor(10000 + Math.random() * 90000)}`;
+}
+
+/** The number to show the customer; older orders used their id as the number. */
+export function orderDisplayNumber(order: PlacedOrder): string {
+  return order.displayNumber ?? order.id;
 }
 
 // Fractions of the order's timeline at which each stage ends. The timeline spans

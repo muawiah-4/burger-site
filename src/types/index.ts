@@ -127,7 +127,10 @@ export type PaymentMethod = "card" | "cash" | "wallet";
 export type OrderStatus = "preparing" | "cooking" | "on-the-way" | "ready" | "delivered";
 
 export interface PlacedOrder {
+  /** Unique storage/URL key (a UUID; older orders used a 5-digit number). */
   id: string;
+  /** Short number shown to the customer. Absent on orders saved before it existed. */
+  displayNumber?: string;
   items: CartItem[];
   fulfillment: FulfillmentMethod;
   customer: CustomerInfo;

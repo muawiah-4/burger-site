@@ -17,7 +17,7 @@ import {
   Bike,
 } from "lucide-react";
 import { useAccountModal } from "@/context/account-modal-context";
-import { getAllOrders, deriveStatus } from "@/lib/orders";
+import { getAllOrders, deriveStatus, orderDisplayNumber } from "@/lib/orders";
 import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -250,7 +250,7 @@ export function AccountModal() {
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <span className="font-display text-sm font-extrabold text-cream">
-                                  Order #{order.id}
+                                  Order #{orderDisplayNumber(order)}
                                 </span>
                                 <p className="text-[11px] text-cream/60">
                                   {new Date(order.placedAt).toLocaleDateString("en-US", {

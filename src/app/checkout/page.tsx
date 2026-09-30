@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
-import { generateOrderId, saveOrder } from "@/lib/orders";
+import { generateDisplayNumber, generateOrderId, saveOrder } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
 import {
   isValidCardNumber,
@@ -119,6 +119,7 @@ export default function CheckoutPage() {
     const estimatedMinutes: [number, number] = cart.fulfillment === "delivery" ? [25, 35] : [12, 18];
     const order: PlacedOrder = {
       id,
+      displayNumber: generateDisplayNumber(),
       items: cart.items,
       fulfillment: cart.fulfillment,
       customer,
