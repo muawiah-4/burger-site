@@ -148,7 +148,7 @@ function ProductModalPanel({
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 640px) 100vw, 35vw"
+          sizes="(min-width: 640px) 352px, 100vw"
           className="object-cover"
           loading="eager"
         />

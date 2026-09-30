@@ -46,7 +46,8 @@ export const ProductCard = memo(function ProductCard({
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          // Matches the grid: 2 cols, 3 from md, 4 from lg, capped by the 1280px container.
+          sizes="(min-width: 1280px) 274px, (min-width: 1024px) calc((100vw - 124px) / 4), (min-width: 768px) calc((100vw - 104px) / 3), calc((100vw - 52px) / 2)"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           preload={preload}
         />

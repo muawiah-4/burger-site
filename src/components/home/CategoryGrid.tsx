@@ -35,7 +35,7 @@ export function CategoryGrid() {
                   src={cat.image}
                   alt=""
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(min-width: 1280px) 289px, (min-width: 1024px) calc((100vw - 124px) / 4), (min-width: 640px) calc((100vw - 104px) / 3), calc((100vw - 56px) / 2)"
                   className="object-cover opacity-70 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:opacity-80"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/20 to-transparent" />

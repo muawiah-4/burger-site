@@ -149,13 +149,13 @@ export function ComboCard({
         className={cn("grid grid-cols-2 gap-3", reverse ? "lg:order-1" : "order-1 lg:order-2")}
       >
         <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">
-          <Image src={gallery[0]} alt={selectedItem.name} fill sizes="50vw" className="object-cover" />
+          <Image src={gallery[0]} alt={selectedItem.name} fill sizes="(min-width: 1280px) 504px, (min-width: 1024px) calc((100vw - 160px) * 0.45), (min-width: 640px) calc(100vw - 144px), calc(100vw - 88px)" className="object-cover" />
         </div>
         <div className="relative aspect-square overflow-hidden rounded-3xl">
-          <Image src={gallery[1]} alt="Side" fill sizes="25vw" className="object-cover" />
+          <Image src={gallery[1]} alt="Side" fill sizes="(min-width: 1280px) 246px, (min-width: 1024px) calc((100vw - 160px) * 0.225), (min-width: 640px) calc(50vw - 78px), calc(50vw - 50px)" className="object-cover" />
         </div>
         <div className="relative aspect-square overflow-hidden rounded-3xl">
-          <Image src={gallery[2]} alt={selectedDrink.name} fill sizes="25vw" className="object-cover" />
+          <Image src={gallery[2]} alt={selectedDrink.name} fill sizes="(min-width: 1280px) 246px, (min-width: 1024px) calc((100vw - 160px) * 0.225), (min-width: 640px) calc(50vw - 78px), calc(50vw - 50px)" className="object-cover" />
         </div>
       </m.div>
     </div>
