@@ -78,7 +78,7 @@ function ComboCard({
   category: "burgers" | "pizza";
   reverse?: boolean;
 }) {
-  const { addItem, openCart } = useCart();
+  const { addItem } = useCart();
   const deal = deals.find((d) => d.id === dealId);
 
   const [itemId, setItemId] = useState(items[0].id);
@@ -110,7 +110,6 @@ function ComboCard({
       quantity: 1,
       selectedOptions: options,
     });
-    openCart();
   }
 
   return (

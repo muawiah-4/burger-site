@@ -16,7 +16,7 @@ export function Mascot() {
   const shouldReduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const lineIndex = useRef(0);
-  const timeouts = useRef<number[]>([]);
+  const timeouts = useRef<Set<number>>(new Set());
   const [pupil, setPupil] = useState({ x: 0, y: 0 });
   const [reacting, setReacting] = useState(false);
   const [blinking, setBlinking] = useState(false);
@@ -24,8 +24,12 @@ export function Mascot() {
   const [nearFooter, setNearFooter] = useState(false);
 
   function trackedTimeout(fn: () => void, ms: number) {
-    const id = window.setTimeout(fn, ms);
-    timeouts.current.push(id);
+    // Forget each id once it fires so the set only holds pending timeouts.
+    const id = window.setTimeout(() => {
+      timeouts.current.delete(id);
+      fn();
+    }, ms);
+    timeouts.current.add(id);
     return id;
   }
 

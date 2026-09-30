@@ -10,13 +10,12 @@ import { useCart } from "@/context/cart-context";
 import { buildDealCartItem } from "@/lib/cart";
 
 export function DealsSection() {
-  const { addItem, openCart } = useCart();
+  const { addItem } = useCart();
 
   function addDeal(dealId: string) {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
     addItem(buildDealCartItem(deal));
-    openCart();
   }
 
   return (

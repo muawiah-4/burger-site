@@ -54,7 +54,7 @@ export function MenuView() {
   const [spicyOnly, setSpicyOnly] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { addItem, openCart } = useCart();
+  const { addItem } = useCart();
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
@@ -96,7 +96,6 @@ export function MenuView() {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
     addItem(buildDealCartItem(deal));
-    openCart();
   }
 
   return (

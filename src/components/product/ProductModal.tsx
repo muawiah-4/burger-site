@@ -65,7 +65,7 @@ function ProductModalPanel({
   close: () => void;
   shouldReduceMotion: boolean;
 }) {
-  const { addItem, openCart } = useCart();
+  const { addItem } = useCart();
   const { launch } = useFlyToCart();
   const imageWrapRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<SelectionState>(() => defaultSelection(product.optionGroups));
@@ -106,7 +106,6 @@ function ProductModalPanel({
       selectedOptions: buildSelectedOptions(product, selection),
     });
     close();
-    openCart();
   }
 
   return (

@@ -21,7 +21,7 @@ import { getAllOrders, deriveStatus, orderDisplayNumber } from "@/lib/orders";
 import { PlacedOrder } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 const USER_STORAGE_KEY = "ember.user.v1";
@@ -209,11 +209,9 @@ export function AccountModal() {
                       <p className="mt-1 max-w-xs text-xs text-cream/60">
                         When you place an order, live tracking details will appear here automatically.
                       </p>
-                      <Link href="/menu" onClick={closeAccount} className="mt-5">
-                        <Button size="sm" variant="primary">
-                          Explore Menu
-                        </Button>
-                      </Link>
+                      <ButtonLink href="/menu" onClick={closeAccount} size="sm" variant="primary" className="mt-5">
+                        Explore Menu
+                      </ButtonLink>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">

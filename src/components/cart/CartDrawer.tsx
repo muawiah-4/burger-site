@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Trash2, ShoppingBag, Tag } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function CartDrawer() {
@@ -141,11 +140,9 @@ export function CartDrawer() {
                     </div>
                   </div>
 
-                  <Link href="/checkout" onClick={closeCart}>
-                    <Button variant="primary" size="lg" className="mt-4 w-full">
-                      Checkout
-                    </Button>
-                  </Link>
+                  <ButtonLink href="/checkout" onClick={closeCart} variant="primary" size="lg" className="mt-4 w-full">
+                    Checkout
+                  </ButtonLink>
                   <button
                     type="button"
                     onClick={closeCart}
