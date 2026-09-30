@@ -34,16 +34,24 @@ export function LocationFinder() {
 
   const [detecting, setDetecting] = useState(false);
   const [nearestId, setNearestId] = useState<string | null>(null);
+  // False when we couldn't locate the user and are just suggesting a default kitchen.
+  const [nearestIsReal, setNearestIsReal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   function detectNearest() {
     setDetecting(true);
     setStatusMessage("Finding closest Ember kitchen...");
 
-    if (!navigator.geolocation) {
+    // Without a position we can't claim anything is "nearest" — say what we're showing.
+    const showDefault = (reason: string) => {
       setDetecting(false);
       setNearestId(locations[0].id);
-      setStatusMessage(`Found nearest: ${locations[0].name} (${locations[0].distanceMiles} mi)`);
+      setNearestIsReal(false);
+      setStatusMessage(`${reason} Showing our ${locations[0].name.replace(/^Ember /, "")} kitchen.`);
+    };
+
+    if (!navigator.geolocation) {
+      showDefault("Location isn't available in this browser.");
       return;
     }
 
@@ -58,18 +66,17 @@ export function LocationFinder() {
         withDistance.sort((a, b) => a.distance - b.distance);
         const nearest = withDistance[0];
         setNearestId(nearest.loc.id);
+        setNearestIsReal(true);
         setStatusMessage(`Nearest to you: ${nearest.loc.name} (${nearest.distance.toFixed(1)} mi)`);
       },
-      () => {
-        setDetecting(false);
-        setNearestId(locations[0].id);
-        setStatusMessage(`Selected nearest kitchen: ${locations[0].name}`);
-      },
+      () => showDefault("We couldn't get your location."),
       { timeout: 5000 }
     );
   }
 
   function orderHere(locationId: string) {
+    // Choosing a kitchen to order from means picking up there.
+    setFulfillment("pickup");
     setPickupLocation(locationId);
     router.push("/menu");
   }
@@ -116,6 +123,8 @@ export function LocationFinder() {
         </Button>
       </div>
 
+      {/* Always mounted so screen readers announce message changes. */}
+      <div role="status">
       {statusMessage && (
         <div className="mt-4 flex items-center justify-between rounded-2xl bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-cream">
           <span>{statusMessage}</span>
@@ -128,6 +137,7 @@ export function LocationFinder() {
           </button>
         </div>
       )}
+      </div>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {filtered.map((loc) => {
@@ -146,7 +156,7 @@ export function LocationFinder() {
                   <p className="font-display text-base font-extrabold text-cream">{loc.name}</p>
                   {isNearest && (
                     <span className="rounded-full bg-ember-fill px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cream">
-                      Nearest
+                      {nearestIsReal ? "Nearest" : "Suggested"}
                     </span>
                   )}
                 </div>
@@ -160,7 +170,13 @@ export function LocationFinder() {
                 {loc.deliveryAvailable ? `Delivery available · Pickup ${loc.pickupEta}` : `Pickup only · ${loc.pickupEta}`}
               </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => orderHere(loc.id)} className="shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => orderHere(loc.id)}
+              className="shrink-0"
+              aria-label={`Order pickup from ${loc.name}`}
+            >
               Order Here
             </Button>
           </div>

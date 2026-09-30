@@ -214,7 +214,14 @@ export function Navbar() {
                 <ButtonLink href="/menu" size="lg" onClick={() => setMobileOpen(false)}>
                   Order Now
                 </ButtonLink>
-                <Button variant="outline" size="lg" onClick={() => setMobileOpen(false)}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openAccount();
+                  }}
+                >
                   <User size={16} /> Account
                 </Button>
               </div>
