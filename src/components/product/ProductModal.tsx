@@ -218,17 +218,17 @@ function ProductModalPanel({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-cream/10 bg-charcoal p-4">
-          <QuantityStepper quantity={quantity} onChange={setQuantity} />
+        <div className="flex items-center justify-between gap-3 border-t border-cream/10 bg-charcoal px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:gap-4 sm:p-4">
+          <QuantityStepper quantity={quantity} onChange={setQuantity} className="shrink-0" />
           <Button
             variant="primary"
-            size="lg"
-            className="flex-1 justify-between"
+            size="md"
+            className="min-w-0 flex-1 justify-between py-3.5 sm:px-8 sm:py-4 sm:text-base"
             disabled={!complete}
             onClick={handleAddToCart}
           >
-            <span>{complete ? "Add to Cart" : "Select options"}</span>
-            <span>{formatPrice(unitPrice * quantity)}</span>
+            <span className="truncate">{complete ? "Add to Cart" : "Select options"}</span>
+            <span className="shrink-0 tabular-nums">{formatPrice(unitPrice * quantity)}</span>
           </Button>
         </div>
       </div>
