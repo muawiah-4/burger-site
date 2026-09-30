@@ -64,9 +64,9 @@ export function CartDrawer() {
                 <ShoppingBag size={40} className="text-cream/20" />
                 <p className="font-display font-bold text-cream">Your cart is empty</p>
                 <p className="text-sm text-cream/60">Add something delicious to get started.</p>
-                <Button variant="secondary" size="sm" onClick={closeCart} className="mt-2">
+                <ButtonLink href="/menu" variant="secondary" size="sm" onClick={closeCart} className="mt-2">
                   Browse Menu
-                </Button>
+                </ButtonLink>
               </div>
             ) : (
               <>
@@ -75,7 +75,7 @@ export function CartDrawer() {
                     {items.map((item) => (
                       <li key={item.cartItemId} className="flex gap-3 border-b border-cream/5 pb-4">
                         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-charcoal-soft">
-                          <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
+                          <Image src={item.image} alt="" fill sizes="80px" className="object-cover" />
                         </div>
                         <div className="flex flex-1 flex-col gap-1">
                           <div className="flex items-start justify-between gap-2">
@@ -92,9 +92,14 @@ export function CartDrawer() {
                             </button>
                           </div>
                           {item.selectedOptions.length > 0 && (
-                            <p className="text-[11px] leading-relaxed text-cream/60">
-                              {item.selectedOptions.map((o) => o.choiceLabels.join(", ")).join(" · ")}
-                            </p>
+                            <ul className="text-[11px] leading-relaxed text-cream/60">
+                              {item.selectedOptions.map((o) => (
+                                <li key={o.groupId}>
+                                  <span className="font-semibold text-cream/70">{o.groupLabel}:</span>{" "}
+                                  {o.choiceLabels.join(", ")}
+                                </li>
+                              ))}
+                            </ul>
                           )}
                           <div className="mt-1 flex items-center justify-between">
                             <QuantityStepper
