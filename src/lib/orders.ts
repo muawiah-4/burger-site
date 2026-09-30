@@ -1,4 +1,4 @@
-import { PlacedOrder } from "@/types";
+import { OrderStatus, PlacedOrder } from "@/types";
 
 const ORDERS_KEY = "ember.orders.v1";
 const LATEST_KEY = "ember.orders.latest";
@@ -45,18 +45,24 @@ export function generateOrderId(): string {
   return `${n}`;
 }
 
+// Fractions of the order's timeline at which each stage ends. The timeline spans
+// the ETA's upper bound for both delivery and pickup, so the tracker never reports
+// an order as delivered / picked up before the ETA shown to the customer has elapsed.
+const PREPARING_END_FRACTION = 0.25;
+const COOKING_END_FRACTION = 0.65;
+
 /** Derives a live order status from elapsed time so the tracker progresses without a backend. */
 export function deriveStatus(order: PlacedOrder): {
-  status: "preparing" | "cooking" | "on-the-way" | "ready" | "delivered";
+  status: OrderStatus;
   progress: number;
 } {
   const placedAt = new Date(order.placedAt).getTime();
   const elapsedMin = (Date.now() - placedAt) / 60000;
-  const [minEta] = order.estimatedMinutes;
-  const totalSpan = order.fulfillment === "delivery" ? minEta : Math.max(minEta - 5, 6);
+  const [, maxEta] = order.estimatedMinutes;
+  const totalSpan = maxEta;
 
-  const preparingEnd = totalSpan * 0.25;
-  const cookingEnd = totalSpan * 0.65;
+  const preparingEnd = totalSpan * PREPARING_END_FRACTION;
+  const cookingEnd = totalSpan * COOKING_END_FRACTION;
   const onTheWayEnd = totalSpan;
 
   if (elapsedMin >= onTheWayEnd) return { status: "delivered", progress: 100 };

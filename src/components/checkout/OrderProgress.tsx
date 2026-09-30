@@ -23,13 +23,16 @@ const PICKUP_STAGES = [
 
 export function OrderProgress({ order }: { order: PlacedOrder }) {
   const [tick, setTick] = useState(0);
+  const { status, progress } = deriveStatus(order);
+  // "delivered" is terminal (also covers picked-up pickup orders) — stop re-deriving.
+  const isComplete = status === "delivered";
 
   useEffect(() => {
+    if (isComplete) return;
     const interval = setInterval(() => setTick((t) => t + 1), 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isComplete]);
 
-  const { status, progress } = deriveStatus(order);
   const stages = order.fulfillment === "pickup" ? PICKUP_STAGES : DELIVERY_STAGES;
   const activeIndex = stages.findIndex((s) => s.id === status);
 

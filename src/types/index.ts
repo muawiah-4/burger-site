@@ -123,7 +123,8 @@ export interface DeliveryAddress {
 
 export type PaymentMethod = "card" | "cash" | "wallet";
 
-export type OrderStatus = "preparing" | "cooking" | "on-the-way" | "delivered";
+/** "ready" is pickup-only (waiting at the counter); "delivered" also means "picked up" for pickup orders. */
+export type OrderStatus = "preparing" | "cooking" | "on-the-way" | "ready" | "delivered";
 
 export interface PlacedOrder {
   id: string;
