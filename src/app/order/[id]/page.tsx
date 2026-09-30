@@ -8,6 +8,7 @@ import { CheckCircle2, Clock, MapPin } from "lucide-react";
 import { PlacedOrder } from "@/types";
 import { getOrder, orderDisplayNumber } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
+import { paymentLabel } from "@/lib/payment";
 import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
 import { ButtonLink } from "@/components/ui/Button";
@@ -90,9 +91,17 @@ export default function OrderPage() {
         </div>
 
         <div className="rounded-3xl border border-cream/10 bg-charcoal-raised p-5">
-          <h2 className="font-display text-xs font-bold uppercase tracking-wide text-cream/60">Total Paid</h2>
+          <h2 className="font-display text-xs font-bold uppercase tracking-wide text-cream/60">
+            {order.payment === "cash" ? "Total due (cash)" : "Total Paid"}
+          </h2>
           <p className="mt-2 font-display text-2xl font-extrabold text-cream">{formatPrice(order.total)}</p>
-          <p className="text-xs text-cream/60 capitalize">via {order.payment}</p>
+          <p className="text-xs text-cream/60">
+            {order.payment === "cash"
+              ? order.fulfillment === "pickup"
+                ? "Pay when you collect your order"
+                : "Pay the driver when your order arrives"
+              : `via ${paymentLabel(order.payment, order.fulfillment)}`}
+          </p>
         </div>
       </div>
 

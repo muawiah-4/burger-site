@@ -293,7 +293,7 @@ export default function CheckoutPage() {
                 />
               )}
               {step === 4 && (
-                <PaymentStep method={payment} onMethodChange={setPayment} card={card} onCardChange={setCard} errors={cardErrors} />
+                <PaymentStep fulfillment={cart.fulfillment} method={payment} onMethodChange={setPayment} card={card} onCardChange={setCard} errors={cardErrors} />
               )}
               {step === 5 && (
                 <ReviewStep

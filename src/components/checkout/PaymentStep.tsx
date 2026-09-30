@@ -1,7 +1,8 @@
 "use client";
 
 import { CreditCard, Banknote, Wallet, Check } from "lucide-react";
-import { PaymentMethod } from "@/types";
+import { FulfillmentMethod, PaymentMethod } from "@/types";
+import { paymentLabel } from "@/lib/payment";
 import { cn } from "@/lib/utils";
 import { Field } from "./Field";
 
@@ -12,19 +13,21 @@ export interface CardDetails {
   cvc: string;
 }
 
-const METHODS: { id: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
-  { id: "card", label: "Card", icon: CreditCard },
-  { id: "cash", label: "Cash on Delivery", icon: Banknote },
-  { id: "wallet", label: "Digital Wallet", icon: Wallet },
+const METHODS: { id: PaymentMethod; icon: typeof CreditCard }[] = [
+  { id: "card", icon: CreditCard },
+  { id: "cash", icon: Banknote },
+  { id: "wallet", icon: Wallet },
 ];
 
 export function PaymentStep({
+  fulfillment,
   method,
   onMethodChange,
   card,
   onCardChange,
   errors,
 }: {
+  fulfillment: FulfillmentMethod;
   method: PaymentMethod;
   onMethodChange: (m: PaymentMethod) => void;
   card: CardDetails;
@@ -57,7 +60,7 @@ export function PaymentStep({
                 </span>
               )}
               <Icon size={22} className={active ? "text-ember" : "text-cream/60"} />
-              <span className="font-display text-xs font-bold text-cream">{m.label}</span>
+              <span className="font-display text-xs font-bold text-cream">{paymentLabel(m.id, fulfillment)}</span>
             </button>
           );
         })}
@@ -110,7 +113,9 @@ export function PaymentStep({
 
       {method === "cash" && (
         <p className="mt-6 rounded-2xl bg-cream/5 p-4 text-sm text-cream/60">
-          Pay with cash when your order arrives. Please have exact change ready if possible.
+          {fulfillment === "pickup"
+            ? "Pay with cash when you collect your order at the counter."
+            : "Pay with cash when your order arrives. Please have exact change ready if possible."}
         </p>
       )}
 

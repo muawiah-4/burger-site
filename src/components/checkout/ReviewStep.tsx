@@ -1,18 +1,13 @@
 import { CreditCard, Banknote, Wallet, Pencil } from "lucide-react";
 import { CartItem, CustomerInfo, DeliveryAddress, FulfillmentMethod, PaymentMethod } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { paymentLabel } from "@/lib/payment";
 import { locations } from "@/lib/data/locations";
 
 const PAYMENT_ICON: Record<PaymentMethod, typeof CreditCard> = {
   card: CreditCard,
   cash: Banknote,
   wallet: Wallet,
-};
-
-const PAYMENT_LABEL: Record<PaymentMethod, string> = {
-  card: "Card",
-  cash: "Cash on Delivery",
-  wallet: "Digital Wallet",
 };
 
 export function ReviewStep({
@@ -96,7 +91,7 @@ export function ReviewStep({
 
         <ReviewRow title="Payment" onEdit={() => onEditStep(4)}>
           <p className="flex items-center gap-2 text-sm text-cream/70">
-            <PaymentIcon size={15} /> {PAYMENT_LABEL[payment]}
+            <PaymentIcon size={15} /> {paymentLabel(payment, fulfillment)}
           </p>
         </ReviewRow>
       </div>
