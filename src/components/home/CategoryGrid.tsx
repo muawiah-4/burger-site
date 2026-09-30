@@ -1,13 +1,13 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { categories } from "@/lib/data/categories";
 import { getProductsByCategory } from "@/lib/data/products";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { Reveal } from "@/components/ui/Reveal";
 
+// Server Component: the item counts are computed here, so the product catalogue
+// never reaches the client for this section.
 export function CategoryGrid() {
   return (
     <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="categories">
@@ -16,7 +16,7 @@ export function CategoryGrid() {
         {categories.map((cat, i) => {
           const count = getProductsByCategory(cat.id).length;
           return (
-            <motion.div
+            <Reveal
               key={cat.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ export function CategoryGrid() {
                   </span>
                 </div>
               </Link>
-            </motion.div>
+            </Reveal>
           );
         })}
       </div>

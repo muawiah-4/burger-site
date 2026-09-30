@@ -1,6 +1,6 @@
 import { LATEST_KEY, ORDERS_KEY } from "@/lib/orders";
 import { USER_STORAGE_KEY } from "@/lib/user-profile";
-import { CART_STORAGE_KEY } from "@/lib/cart-storage";
+import { CART_STORAGE_KEY } from "@/lib/storage-shared";
 
 /** Every localStorage key Ember writes. Keep in sync with SECURITY.md. */
 export const EMBER_STORAGE_KEYS = [CART_STORAGE_KEY, ORDERS_KEY, LATEST_KEY, USER_STORAGE_KEY] as const;

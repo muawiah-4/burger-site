@@ -1,9 +1,8 @@
-"use client";
-
-import { motion, type Transition } from "motion/react";
+import type { Transition } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { AmbientVideo } from "@/components/ui/AmbientVideo";
+import { Reveal } from "@/components/ui/Reveal";
 
 const HERO_POSTER = "/videos/hero-cooking-poster.webp";
 
@@ -38,15 +37,17 @@ export function Hero() {
 
       <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8">
         <div className="max-w-xl">
-          <motion.p
+          <Reveal
+            as="p"
             initial={fadeUpInitial}
             animate={fadeUpAnimate}
             transition={fadeUpTransition(0)}
             className="mb-4 font-display text-xs font-bold uppercase tracking-[0.2em] text-gold"
           >
             Crafted for Cravings
-          </motion.p>
-          <motion.h1
+          </Reveal>
+          <Reveal
+            as="h1"
             initial={slideUpInitial}
             animate={slideUpAnimate}
             transition={fadeUpTransition(1)}
@@ -55,8 +56,9 @@ export function Hero() {
             BIG FLAVOR.
             <br />
             <span className="text-ember">ZERO BORING</span> BITES.
-          </motion.h1>
-          <motion.p
+          </Reveal>
+          <Reveal
+            as="p"
             initial={fadeUpInitial}
             animate={fadeUpAnimate}
             transition={fadeUpTransition(2)}
@@ -64,8 +66,8 @@ export function Hero() {
           >
             Burgers, pizza, crispy chicken, loaded sides and everything your cravings have been
             asking for.
-          </motion.p>
-          <motion.div
+          </Reveal>
+          <Reveal
             initial={slideUpInitial}
             animate={slideUpAnimate}
             transition={fadeUpTransition(3)}
@@ -77,7 +79,7 @@ export function Hero() {
             <ButtonLink href="/menu" size="lg" variant="outline" className="border-cream/25 text-cream hover:border-cream">
               Explore Menu
             </ButtonLink>
-          </motion.div>
+          </Reveal>
         </div>
       </div>
     </section>

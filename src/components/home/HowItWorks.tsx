@@ -1,7 +1,5 @@
-"use client";
-
-import { motion } from "motion/react";
 import { UtensilsCrossed, Settings2, Sparkles } from "lucide-react";
+import { Reveal } from "@/components/ui/Reveal";
 
 const steps = [
   { number: "01", title: "Choose", desc: "Burgers to shakes — 8 categories, zero filler.", icon: UtensilsCrossed },
@@ -32,7 +30,7 @@ export function HowItWorks() {
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
-              <motion.div
+              <Reveal
                 key={step.number}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +46,7 @@ export function HowItWorks() {
                 </span>
                 <h3 className="mt-1 font-display text-xl font-extrabold text-cream">{step.title}</h3>
                 <p className="mt-1 text-sm text-cream/60">{step.desc}</p>
-              </motion.div>
+              </Reveal>
             );
           })}
         </div>

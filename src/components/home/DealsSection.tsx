@@ -1,23 +1,12 @@
-"use client";
-
 import Image from "next/image";
-import { motion } from "motion/react";
 import { deals } from "@/lib/data/deals";
 import { formatPrice } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/cart-context";
+import { Reveal } from "@/components/ui/Reveal";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { buildDealCartItem } from "@/lib/cart";
 
 export function DealsSection() {
-  const { addItem } = useCart();
-
-  function addDeal(dealId: string) {
-    const deal = deals.find((d) => d.id === dealId);
-    if (!deal) return;
-    addItem(buildDealCartItem(deal));
-  }
-
   return (
     <section className="bg-charcoal py-20 sm:py-28" id="deals">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -26,7 +15,7 @@ export function DealsSection() {
           {deals.map((deal, i) => {
             const savings = Math.round((deal.originalPrice - deal.price) * 100) / 100;
             return (
-              <motion.div
+              <Reveal
                 key={deal.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -61,16 +50,11 @@ export function DealsSection() {
                       {formatPrice(deal.originalPrice)}
                     </span>
                   </div>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="mt-4 w-full"
-                    onClick={() => addDeal(deal.id)}
-                  >
+                  <AddToCartButton item={buildDealCartItem(deal)} variant="primary" size="md" className="mt-4 w-full">
                     {deal.ctaLabel}
-                  </Button>
+                  </AddToCartButton>
                 </div>
-              </motion.div>
+              </Reveal>
             );
           })}
         </div>

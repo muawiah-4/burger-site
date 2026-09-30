@@ -1,6 +1,4 @@
-"use client";
-
-import { motion } from "motion/react";
+import { Reveal } from "@/components/ui/Reveal";
 import { AmbientVideo } from "@/components/ui/AmbientVideo";
 
 const stats = [
@@ -13,7 +11,7 @@ export function About() {
   return (
     <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="about">
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
-        <motion.div
+        <Reveal
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-80px" }}
@@ -25,7 +23,7 @@ export function About() {
             mp4="/videos/about-prep-720p.mp4"
             poster="/videos/about-prep-poster.webp"
           />
-        </motion.div>
+        </Reveal>
 
         <div>
           <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember-text">About Ember</p>

@@ -11,7 +11,7 @@ import {
 } from "react";
 import { CartItem, FulfillmentMethod } from "@/types";
 import { computeTotals, evaluatePromo, MAX_ITEM_QUANTITY, selectionKey, Totals } from "@/lib/cart";
-import { CART_STORAGE_KEY, EMPTY_CART_STATE, parseStoredCart, StoredCartState } from "@/lib/cart-storage";
+import { CART_STORAGE_KEY, EMPTY_CART_STATE, StoredCartState } from "@/lib/storage-shared";
 import { uid } from "@/lib/utils";
 
 type CartState = StoredCartState;
@@ -25,7 +25,7 @@ type Action =
   | { type: "SET_FULFILLMENT"; fulfillment: FulfillmentMethod }
   | { type: "SET_PICKUP_LOCATION"; locationId: string }
   | { type: "SET_PROMO"; code: string }
-  | { type: "HYDRATE"; state: CartState };
+  | { type: "HYDRATE"; state: CartState; keepPending?: boolean };
 
 const STORAGE_KEY = CART_STORAGE_KEY;
 
@@ -74,7 +74,11 @@ function reducer(state: CartState, action: Action): CartState {
     case "SET_PROMO":
       return { ...state, promoCode: action.code };
     case "HYDRATE":
-      return action.state;
+      // The first read from storage lands after a chunk load; keep any line added
+      // in the meantime instead of overwriting it.
+      return action.keepPending && state.items.length > 0
+        ? { ...action.state, items: [...action.state.items, ...state.items] }
+        : action.state;
     default:
       return state;
   }
@@ -90,6 +94,18 @@ function keyToSelection(item: CartItem) {
 }
 
 const initialState: CartState = EMPTY_CART_STATE;
+
+function readStoredCart(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null; // storage unavailable — start with an empty cart
+  }
+}
+
+function loadParser() {
+  return import("@/lib/cart-storage").then((m) => m.parseStoredCart);
+}
 
 function isEmptyCart(state: CartState) {
   return (
@@ -133,25 +149,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      // parseStoredCart validates the shape, drops malformed lines and re-prices
-      // items from the menu data rather than trusting stored prices.
-      if (raw) dispatch({ type: "HYDRATE", state: parseStoredCart(raw) });
-    } catch {
-      // storage unavailable — start with an empty cart
-    } finally {
-      setHydrated(true);
-    }
+    let cancelled = false;
+    const stored = readStoredCart();
+    // parseStoredCart validates the shape, drops malformed lines and re-prices
+    // items from the menu data rather than trusting stored prices. It needs the
+    // whole catalogue, so it's loaded on demand instead of shipping on every route.
+    const hydrate = stored
+      ? loadParser().then((parse) => {
+          if (!cancelled) dispatch({ type: "HYDRATE", state: parse(stored), keepPending: true });
+        })
+      : Promise.resolve();
+    hydrate
+      .catch(() => {
+        // chunk failed to load — keep the empty cart
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
 
     // Cross-tab sync: another tab wrote the cart, so adopt its state.
     function onStorage(e: StorageEvent) {
       if (e.storageArea !== localStorage) return;
       if (e.key !== STORAGE_KEY && e.key !== null) return;
-      dispatch({ type: "HYDRATE", state: parseStoredCart(e.key === null ? null : e.newValue) });
+      const value = e.key === null ? null : e.newValue;
+      loadParser().then(
+        (parse) => {
+          if (!cancelled) dispatch({ type: "HYDRATE", state: parse(value) });
+        },
+        () => {}
+      );
     }
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   useEffect(() => {

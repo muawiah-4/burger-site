@@ -1,5 +1,5 @@
 import { CartItem, CategoryId, DeliveryArea, OrderStatus, PaymentMethod, PlacedOrder } from "@/types";
-import { isFiniteNonNegative, isRecord, isRenderableImage, parseSelectedOption } from "@/lib/cart-storage";
+import { isFiniteNonNegative, isRecord, isRenderableImage, parseSelectedOption } from "@/lib/storage-shared";
 import { MAX_ITEM_QUANTITY } from "@/lib/cart";
 
 export const ORDERS_KEY = "ember.orders.v1";
