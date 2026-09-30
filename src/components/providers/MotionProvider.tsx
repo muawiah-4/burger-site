@@ -8,6 +8,11 @@ import { MotionConfig } from "motion/react";
  * props on useReducedMotion() — it is null on the server and real on the
  * client, which causes hydration mismatches.
  */
-export function MotionProvider({ children }: { children: React.ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+export function MotionProvider({ children, nonce }: { children: React.ReactNode; nonce?: string }) {
+  // The nonce lets Motion's injected <style> (AnimatePresence popLayout) pass the CSP.
+  return (
+    <MotionConfig reducedMotion="user" nonce={nonce}>
+      {children}
+    </MotionConfig>
+  );
 }

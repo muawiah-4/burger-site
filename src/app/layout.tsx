@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/cart-context";
@@ -31,11 +32,14 @@ export const metadata: Metadata = {
     "Order premium burgers, pizza, crispy chicken, sides and shakes from Ember. Fast delivery or pickup, made fresh when you order.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Reading the per-request CSP nonce (set in src/proxy.ts) opts every route into
+  // dynamic rendering, which nonces require: a prerendered page can't carry one.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en">
       <body className={`${jakarta.variable} ${inter.variable} antialiased`}>
-        <MotionProvider>
+        <MotionProvider nonce={nonce}>
           <CartProvider>
             <FlyToCartProvider>
               <ProductModalProvider>
