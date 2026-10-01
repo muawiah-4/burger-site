@@ -7,13 +7,15 @@ fetches that `next/image` makes to `images.unsplash.com`.
 
 ## What is stored, where, and for how long
 
-Everything lives in the browser's `localStorage` on the device you used. There are no cookies.
+Everything lives in the browser's `localStorage` on the device you used, apart from the in-progress
+checkout draft, which is in `sessionStorage`. There are no cookies.
 
 | Key | Contents | Retention |
 | --- | --- | --- |
 | `ember.cart.v1` | Cart lines, delivery/pickup choice, pickup location, promo code | Until checkout, "Clear my data", or clearing site data. Removed when the cart is empty. |
 | `ember.orders.v1` | Placed demo orders: items, prices, totals, payment *method* (card/cash/wallet), timestamps and, for delivery, **city and ZIP only** | The newest **20** orders, none older than **30 days**. Enforced on every load and save. |
 | `ember.orders.latest` | Id of the most recent order (for `/order/latest`) | Removed with the order it points to. |
+| `ember.checkout.draft.v1` (sessionStorage) | In-progress checkout: current step, contact details, delivery address, payment *method*, tip choice, scheduled time. **No card details.** | Until the order is placed, "Clear my data", or the tab is closed. |
 | `ember.user.v1` | Details you choose to save in Account → Saved Details (name, phone, email, street, city, ZIP) to pre-fill checkout | Until you change it, use "Clear my data", or clear site data. |
 
 What is **never** stored:

@@ -7,11 +7,14 @@ export function OrderSummary({
   items,
   totals,
   showItems = true,
+  tip = 0,
 }: {
   items: CartItem[];
   totals: Totals;
   /** Hide the line items when they're already listed nearby (the Review step). */
   showItems?: boolean;
+  /** Driver tip in dollars, shown as its own line and added to the displayed total. */
+  tip?: number;
 }) {
   return (
     <div className="rounded-3xl border border-cream/10 bg-charcoal-raised p-5">
@@ -53,10 +56,12 @@ export function OrderSummary({
         <Row label="Delivery fee" value={totals.deliveryFee === 0 ? "Free" : formatPrice(totals.deliveryFee)} />
         {totals.discount > 0 && <Row label="Discount" value={`-${formatPrice(totals.discount)}`} accent />}
         <Row label="Tax" value={formatPrice(totals.tax)} />
+        {tip > 0 && <Row label="Driver tip" value={formatPrice(tip)} />}
         <div className="mt-1 flex items-center justify-between border-t border-cream/10 pt-2 font-display text-base font-extrabold text-cream">
           <span>Total</span>
-          <span>{formatPrice(totals.total)}</span>
+          <span>{formatPrice(totals.total + tip)}</span>
         </div>
+        {tip > 0 && <p className="text-right text-[11px] text-cream/60">Tip added to total</p>}
       </div>
     </div>
   );
