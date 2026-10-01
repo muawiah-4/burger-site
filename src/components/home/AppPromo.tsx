@@ -5,7 +5,8 @@ import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { Zap, MapPinned, Heart, Tag, Flame, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Marquee } from "@/components/ui/Marquee";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { Newsletter } from "./Newsletter";
 import dynamic from "next/dynamic";
 import { useOpenedOnce } from "@/hooks/useOpenedOnce";
 
@@ -13,17 +14,10 @@ import { useOpenedOnce } from "@/hooks/useOpenedOnce";
 const AppDownloadModal = dynamic(() => import("./AppDownloadModal").then((m) => m.AppDownloadModal), { ssr: false });
 
 const perks = [
-  { icon: Zap, label: "Order faster" },
-  { icon: MapPinned, label: "Track orders" },
-  { icon: Heart, label: "Save favorite meals" },
-  { icon: Tag, label: "Get exclusive deals" },
-];
-
-const TICKER_ITEMS = [
-  "MADE FRESH WHEN YOU ORDER",
-  "ZERO FROZEN SHORTCUTS",
-  "BIG FLAVOR, ZERO BORING BITES",
-  "HOT OFF THE GRILL, FAST TO YOUR DOOR",
+  { icon: Zap, label: "Skip the line, not the flavor" },
+  { icon: MapPinned, label: "Watch your order from grill to door" },
+  { icon: Heart, label: "Reorder your usual in two taps" },
+  { icon: Tag, label: "Deals we only drop in-app" },
 ];
 
 export function AppPromo() {
@@ -33,20 +27,18 @@ export function AppPromo() {
 
   return (
     <>
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
+      <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-24">
         <div className="relative overflow-hidden rounded-[2.5rem] bg-charcoal">
           <div className="grid grid-cols-1 items-center gap-10 p-8 sm:p-12 lg:grid-cols-2">
             <div>
-              <h2 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-cream sm:text-4xl">
-                YOUR CRAVINGS, ONE TAP AWAY.
-              </h2>
+              <SectionHeading label="The Ember app" title="Your cravings, one tap away" caps />
               <ul className="mt-6 flex flex-col gap-3">
                 {perks.map((perk) => {
                   const Icon = perk.icon;
                   return (
-                    <li key={perk.label} className="flex items-center gap-3 text-cream/70">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/10 text-ember">
-                        <Icon size={16} />
+                    <li key={perk.label} className="flex items-center gap-3 text-cream/80">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream/10 text-ember-text">
+                        <Icon size={16} aria-hidden="true" />
                       </span>
                       <span className="text-sm font-medium">{perk.label}</span>
                     </li>
@@ -121,7 +113,7 @@ export function AppPromo() {
             </m.div>
           </div>
 
-          <Marquee items={TICKER_ITEMS} />
+          <Newsletter />
         </div>
       </section>
 

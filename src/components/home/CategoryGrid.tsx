@@ -10,8 +10,8 @@ import { Reveal } from "@/components/ui/Reveal";
 // never reaches the client for this section.
 export function CategoryGrid() {
   return (
-    <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="categories">
-      <SectionHeading label="Browse" title="Popular Categories" />
+    <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-24" id="categories">
+      <SectionHeading label="The menu" title="Pick Your Craving" />
       <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
         {categories.map((cat, i) => {
           const count = getProductsByCategory(cat.id).length;

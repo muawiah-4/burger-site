@@ -39,7 +39,6 @@
   --font-body: var(--font-body);
 
   --animate-float: float 6s ease-in-out infinite;
-  --animate-marquee: marquee 28s linear infinite;
 
   @keyframes float {
     0%,
@@ -48,14 +47,6 @@
     }
     50% {
       transform: translateY(-14px);
-    }
-  }
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
     }
   }
 }

@@ -83,8 +83,8 @@ export function LocationFinder() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" id="locations">
-      <SectionHeading label="Find Us" title="Good food. Closer than you think." />
+    <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-24" id="locations">
+      <SectionHeading label="Find us" title="Four Kitchens, One Fire" description="Order pickup from the nearest kitchen or have it delivered. Every location cooks the full menu." />
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <div className="flex flex-1 items-center gap-2 rounded-full border border-cream/15 bg-charcoal-raised px-4 py-3">

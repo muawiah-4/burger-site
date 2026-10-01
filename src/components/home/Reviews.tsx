@@ -4,8 +4,8 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function Reviews() {
   return (
-    <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
-      <SectionHeading label="Reviews" title="The Internet Is Hungry." align="center" />
+    <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-24">
+      <SectionHeading label="Reviews" title="What Regulars Say" align="center" />
       <div className="mt-10 flex gap-4 overflow-x-auto scrollbar-none pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4">
         {reviews.map((review) => (
           <div

@@ -13,7 +13,7 @@ export function Newsletter() {
     e.preventDefault();
     // Client-side only: there's no backend, and the address is never stored or sent.
     if (email.length > 254 || !isValidEmail(email)) {
-      setError("Enter a valid email address.");
+      setError("That email doesn't look right. Try again?");
       return;
     }
     setError("");
@@ -21,18 +21,21 @@ export function Newsletter() {
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-5 py-20 text-center sm:px-8 sm:py-28">
-      <h2 className="font-display text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">
-        GET THE GOOD STUFF.
-      </h2>
-      <p className="mt-3 text-sm text-cream/60">New drops. Better deals. Zero spam.</p>
+    // Rendered as the footer strip of the app promo card, not as its own section.
+    <div className="border-t border-cream/10 bg-charcoal-soft px-8 py-8 sm:px-12">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h3 className="font-display text-xl font-extrabold tracking-tight text-cream">Not an app person?</h3>
+        <p className="mt-1 text-sm text-cream/70">Get new menu drops and the good deals by email, about twice a month.</p>
+      </div>
+      <div>
 
       {submitted ? (
-        <p role="status" className="mt-6 font-display text-sm font-bold text-ember-text">
-          Thanks! Ember is a demo, so your email wasn&apos;t stored or sent anywhere.
+        <p role="status" className="font-display text-sm font-bold text-ember-text">
+          You&apos;re on the list. (Ember is a demo, so your email wasn&apos;t stored or sent anywhere.)
         </p>
       ) : (
-        <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2 sm:flex-row">
           <label htmlFor="newsletter-email" className="sr-only">
             Email address
           </label>
@@ -58,6 +61,8 @@ export function Newsletter() {
           {error}
         </p>
       )}
-    </section>
+      </div>
+      </div>
+    </div>
   );
 }

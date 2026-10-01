@@ -65,7 +65,7 @@ export function ComboCard({
   extraInclude,
   gallery,
   category,
-  reverse,
+  switcher,
 }: {
   deal: Deal;
   badgeLabel: string;
@@ -76,7 +76,8 @@ export function ComboCard({
   extraInclude?: { groupId: string; groupLabel: string; label: string };
   gallery: [string, string, string];
   category: "burgers" | "pizza";
-  reverse?: boolean;
+  /** Burger/pizza toggle rendered above the heading (see ComboBuilder). */
+  switcher?: React.ReactNode;
 }) {
   const { addItem } = useCartActions();
   const [itemId, setItemId] = useState(items[0].id);
@@ -111,21 +112,22 @@ export function ComboCard({
   }
 
   return (
-    <div className="grid grid-cols-1 items-center gap-10 rounded-[2.5rem] border border-cream/10 bg-charcoal-soft p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-4">
+    <div className="grid grid-cols-1 items-center gap-8 rounded-[2.5rem] border border-cream/10 bg-charcoal-soft p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6">
       <m.div
-        initial={{ opacity: 0, x: reverse ? 20 : -20 }}
+        initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={cn(reverse ? "lg:order-2" : "order-2 lg:order-1")}
+        className="order-2 lg:order-1"
       >
-        <span className="inline-block rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase tracking-wide text-charcoal">
+        {switcher}
+        <span className="mt-5 inline-block rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase tracking-wide text-charcoal">
           {badgeLabel}
         </span>
-        <h2 className="mt-4 font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-cream sm:text-5xl">
+        <h3 className="mt-3 font-display text-3xl font-extrabold leading-tight tracking-tight text-cream sm:text-4xl">
           {heading}
-        </h2>
-        <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream/60">{deal.description}</p>
+        </h3>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-cream/70">{deal.description}</p>
 
         <div className="mt-6 flex flex-col gap-5">
           <PillGroup label={`Choose your ${itemLabel.toLowerCase()}`} items={items} selectedId={itemId} onSelect={setItemId} />
@@ -146,7 +148,7 @@ export function ComboCard({
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={cn("grid grid-cols-2 gap-3", reverse ? "lg:order-1" : "order-1 lg:order-2")}
+        className="order-1 grid grid-cols-2 gap-3 lg:order-2"
       >
         <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">
           <Image src={gallery[0]} alt={selectedItem.name} fill sizes="(min-width: 1280px) 504px, (min-width: 1024px) calc((100vw - 160px) * 0.45), (min-width: 640px) calc(100vw - 144px), calc(100vw - 88px)" className="object-cover" />
