@@ -151,10 +151,19 @@ const CartStateContext = createContext<CartStateValue | null>(null);
 const CartOpenContext = createContext<boolean | null>(null);
 const CartActionsContext = createContext<CartActions | null>(null);
 
+/** The most recent add, for the "Added · View cart" toast and badge bump. `id` ticks on every add. */
+export interface LastAdded {
+  id: number;
+  name: string;
+  quantity: number;
+}
+const LastAddedContext = createContext<LastAdded | null | undefined>(undefined);
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [lastAdded, setLastAdded] = useState<LastAdded | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -236,7 +245,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         for (const opt of item.selectedOptions) selection[opt.groupId] = opt.choiceIds;
         const key = selectionKey(item.productId, selection);
         dispatch({ type: "ADD_ITEM", item, key });
-        setIsOpen(true);
+        // No drawer: a toast confirms the add and offers "View cart" instead.
+        setLastAdded((prev) => ({ id: (prev?.id ?? 0) + 1, name: item.name, quantity: item.quantity }));
       },
       removeItem: (cartItemId) => dispatch({ type: "REMOVE_ITEM", cartItemId }),
       updateQuantity: (cartItemId, quantity) => dispatch({ type: "UPDATE_QUANTITY", cartItemId, quantity }),
@@ -268,7 +278,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   return (
     <CartActionsContext.Provider value={actions}>
       <CartStateContext.Provider value={cartState}>
-        <CartOpenContext.Provider value={isOpen}>{children}</CartOpenContext.Provider>
+        <CartOpenContext.Provider value={isOpen}>
+          <LastAddedContext.Provider value={lastAdded}>{children}</LastAddedContext.Provider>
+        </CartOpenContext.Provider>
       </CartStateContext.Provider>
     </CartActionsContext.Provider>
   );
@@ -288,6 +300,13 @@ export function useCartActions(): CartActions {
 /** Cart contents, totals and promo state. Re-renders when the cart changes. */
 export function useCartState(): CartStateValue {
   return useRequired(CartStateContext, "useCartState");
+}
+
+/** The latest add-to-cart (null until the first add this session). */
+export function useLastAdded(): LastAdded | null {
+  const value = useContext(LastAddedContext);
+  if (value === undefined) throw new Error("useLastAdded must be used within CartProvider");
+  return value;
 }
 
 /** Whether the cart drawer is open. */

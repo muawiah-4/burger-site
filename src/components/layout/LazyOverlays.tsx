@@ -6,6 +6,7 @@ import { useCartOpen } from "@/context/cart-context";
 import { useOpenProduct } from "@/context/product-modal-context";
 import { useAccountModal } from "@/context/account-modal-context";
 import { useOpenedOnce } from "@/hooks/useOpenedOnce";
+import { CartFeedback } from "@/components/cart/CartFeedback";
 
 // Each overlay's code is split out and only fetched the first time it opens. The
 // open/closed state lives in the contexts, so nothing is lost while a chunk loads.
@@ -30,6 +31,7 @@ export function LazyOverlays() {
       {cartOpened && <CartDrawer />}
       {productOpened && <ProductModal />}
       {accountOpened && <AccountModal />}
+      <CartFeedback />
       {/* Mascot hides itself on checkout; skip even loading it there. */}
       {!pathname.startsWith("/checkout") && <Mascot />}
     </>

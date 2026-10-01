@@ -3,6 +3,7 @@
 import { CartItem } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { useCartActions } from "@/context/cart-context";
+import { useFlyToCartActions } from "@/context/fly-to-cart-context";
 
 /**
  * Client leaf for Server Components that only need an "add this line" button. The
@@ -22,8 +23,19 @@ export function AddToCartButton({
   className?: string;
 }) {
   const { addItem } = useCartActions();
+  const { launch } = useFlyToCartActions();
   return (
-    <Button variant={variant} size={size} className={className} onClick={() => addItem(item)}>
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      onClick={(e) => {
+        // Fly from the card's image when the card marks one, else from the button.
+        const card = e.currentTarget.closest("[data-fly-card]");
+        launch(card?.querySelector<HTMLElement>("[data-fly-source]") ?? e.currentTarget, item.image);
+        addItem(item);
+      }}
+    >
       {children}
     </Button>
   );
