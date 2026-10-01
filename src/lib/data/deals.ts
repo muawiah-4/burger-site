@@ -91,3 +91,10 @@ export const deals: Deal[] = [
     ctaLabel: "FEED THE SQUAD",
   },
 ];
+
+/**
+ * Drinks offered in the build-your-own combos (ComboSection). The server prices
+ * and validates combo choices against this list; ComboSection keeps its own copy
+ * for now, so keep the two in sync.
+ */
+export const COMBO_SOFT_DRINK_IDS = ["dr-cola", "dr-diet-cola", "dr-lemonade", "dr-iced-tea", "dr-water"] as const;
