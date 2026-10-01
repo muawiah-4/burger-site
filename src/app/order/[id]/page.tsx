@@ -5,26 +5,79 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Clock, MapPin } from "lucide-react";
-import { PlacedOrder } from "@/types";
+import { OrderStatus, PlacedOrder } from "@/types";
+import { ApiError, fetchOrder, getOrderRef, orderDtoToPlacedOrder } from "@/lib/order-client";
 import { getOrder, orderDisplayNumber } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
 import { paymentLabel } from "@/lib/payment";
 import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { PageLoading } from "@/components/ui/PageLoading";
 import { DemoNotice } from "@/components/ui/DemoNotice";
+
+const POLL_MS = 15_000;
 
 export default function OrderPage() {
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<PlacedOrder | null | undefined>(undefined);
+  const [serverStatus, setServerStatus] = useState<OrderStatus | undefined>(undefined);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    // Orders live in localStorage, which is unavailable during SSR — this read
-    // can only happen client-side after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrder(getOrder(params.id));
-  }, [params.id]);
+    // The tracking token comes from the link (?t=) or this device's order list.
+    const ref = getOrderRef(params.id);
+    const urlToken = new URLSearchParams(window.location.search).get("t");
+    const id = params.id === "latest" ? ref?.orderId : params.id;
+    const token = urlToken ?? ref?.trackingToken;
+    if (!id || !token) {
+      // Orders placed before the backend existed are still read from this device.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOrder(getOrder(params.id));
+      return;
+    }
+
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = () => {
+      fetchOrder(id, token, controller.signal).then(
+        (dto) => {
+          const placed = orderDtoToPlacedOrder(dto);
+          setOrder(placed);
+          setServerStatus(placed.status);
+          setLoadError(null);
+          // Poll for kitchen progress until the order is complete.
+          if (placed.status !== "delivered") timer = setTimeout(load, POLL_MS);
+        },
+        (err: unknown) => {
+          if (controller.signal.aborted) return;
+          if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
+            setOrder(null);
+            return;
+          }
+          setLoadError(err instanceof ApiError ? err.message : "We couldn't load your order.");
+        }
+      );
+    };
+    load();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [params.id, attempt]);
+
+  if (order === undefined && loadError) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-5 pt-28 text-center">
+        <h1 className="font-display text-2xl font-extrabold text-cream">Couldn&apos;t load your order</h1>
+        <p role="alert" className="text-sm text-cream/60">
+          {loadError}
+        </p>
+        <Button onClick={() => { setLoadError(null); setAttempt((a) => a + 1); }}>Try again</Button>
+      </div>
+    );
+  }
 
   if (order === undefined) {
     return <PageLoading label="Loading your order…" />;
@@ -63,7 +116,7 @@ export default function OrderPage() {
       </div>
 
       <div className="mt-10 rounded-3xl border border-cream/10 bg-charcoal-soft p-6 sm:p-8">
-        <OrderProgress order={order} />
+        <OrderProgress order={order} serverStatus={serverStatus} />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -77,7 +130,7 @@ export default function OrderPage() {
               <span>
                 {order.deliveryArea ? `${order.deliveryArea.city}, ${order.deliveryArea.zip}` : "Your delivery address"}
                 <br />
-                <span className="text-xs text-cream/60">Street address isn&apos;t stored on this device.</span>
+                <span className="text-xs text-cream/60">We never store your street address.</span>
               </span>
             </p>
           ) : (

@@ -6,8 +6,16 @@ import { AnimatePresence, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
-import { generateDisplayNumber, generateOrderId, saveOrder } from "@/lib/orders";
+import { CustomerInfo, DeliveryAddress, PaymentMethod } from "@/types";
+import type { CreateOrderRequest } from "@/lib/api-types";
+import {
+  ApiError,
+  buildQuoteRequest,
+  newIdempotencyKey,
+  orderHref,
+  placeOrderRequest,
+  saveOrderRef,
+} from "@/lib/order-client";
 import { formatPrice } from "@/lib/utils";
 import { getSavedUserProfile } from "@/lib/user-profile";
 import {
@@ -65,8 +73,11 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   // Guards against a second click landing before React re-renders with placing=true.
   const placingRef = useRef(false);
-  // Snapshot of the total at submit time: clearCart() zeroes cart.totals while we navigate away.
+  // The total shown on Place Order: the server's total after a 409, and a snapshot
+  // while submitting (clearCart() zeroes cart.totals while we navigate away).
   const [placedTotal, setPlacedTotal] = useState<number | null>(null);
+  const [placeError, setPlaceError] = useState<string | null>(null);
+  const idempotency = useRef<{ key: string; body: string } | null>(null);
 
   const [customer, setCustomer] = useState<CustomerInfo>(EMPTY_CUSTOMER);
   const [address, setAddress] = useState<DeliveryAddress>(EMPTY_ADDRESS);
@@ -199,7 +210,13 @@ export default function CheckoutPage() {
 
   function goToStep(n: number) {
     setStep(n);
-    if (n === 5) setEditingFromReview(false);
+    if (n === 5) {
+      setEditingFromReview(false);
+      // Fresh review: show the cart's total and mint the Idempotency-Key for this order.
+      setPlacedTotal(null);
+      setPlaceError(null);
+      idempotency.current = { key: newIdempotencyKey(), body: "" };
+    }
     window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
   }
 
@@ -225,39 +242,49 @@ export default function CheckoutPage() {
     goToStep(Math.max(step - 1, 1));
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     if (placing || placingRef.current || cart.items.length === 0) return;
     placingRef.current = true;
     setPlacing(true);
-    setPlacedTotal(cart.totals.total);
-    const id = generateOrderId();
-    const estimatedMinutes: [number, number] = cart.fulfillment === "delivery" ? [25, 35] : [12, 18];
-    const order: PlacedOrder = {
-      id,
-      displayNumber: generateDisplayNumber(),
-      items: cart.items,
-      fulfillment: cart.fulfillment,
-      // Contact details and the street address are only needed for this session's
-      // review step, so the saved order keeps just the city and ZIP for the tracker.
-      deliveryArea:
-        cart.fulfillment === "delivery" ? { city: address.city.trim(), zip: address.zip.trim() } : undefined,
-      pickupLocationId: cart.fulfillment === "pickup" ? cart.pickupLocationId ?? undefined : undefined,
-      payment,
-      subtotal: cart.totals.subtotal,
-      deliveryFee: cart.totals.deliveryFee,
-      discount: cart.totals.discount,
-      tax: cart.totals.tax,
-      total: cart.totals.total,
-      promoCode: cart.promoValid ? cart.promoCode : undefined,
-      placedAt: new Date().toISOString(),
-      estimatedMinutes,
+    setPlaceError(null);
+    // The server re-prices the order; we send the total the customer is looking at
+    // and it refuses (409 + fresh quote) if its total differs.
+    const shownTotalCents = Math.round((placedTotal ?? cart.totals.total) * 100);
+    const body: CreateOrderRequest = {
+      ...buildQuoteRequest(cart.items, cart.fulfillment, cart.pickupLocationId, cart.promoValid ? cart.promoCode : ""),
+      paymentMethod: payment,
+      // Contact details and the street address stay in this page; the server
+      // only receives the city and ZIP for the tracker.
+      ...(cart.fulfillment === "delivery" ? { deliveryArea: { city: address.city.trim(), zip: address.zip.trim() } } : {}),
+      expectedTotalCents: shownTotalCents,
     };
-    saveOrder(order);
-    // Card fields only ever live in this component's state and are never saved;
-    // drop them now rather than keeping them around while we navigate away.
-    setCard(EMPTY_CARD);
-    cart.clearCart();
-    router.push(`/order/${id}`);
+    // One key per distinct order body, created on the Review step: a retry of the
+    // same order (double click, flaky network) can never create a second one.
+    const bodyJson = JSON.stringify(body);
+    if (!idempotency.current || (idempotency.current.body && idempotency.current.body !== bodyJson)) {
+      idempotency.current = { key: newIdempotencyKey(), body: bodyJson };
+    }
+    idempotency.current.body = bodyJson;
+    try {
+      const created = await placeOrderRequest(body, idempotency.current.key);
+      saveOrderRef({ ...created, placedAt: new Date().toISOString() });
+      // Card fields only ever live in this component's state and are never saved
+      // or sent; drop them now rather than keeping them around while we navigate away.
+      setCard(EMPTY_CARD);
+      cart.clearCart();
+      router.push(orderHref(created));
+    } catch (err) {
+      placingRef.current = false;
+      setPlacing(false);
+      if (err instanceof ApiError && err.code === "total_mismatch" && err.body?.quote) {
+        setPlacedTotal(err.body.quote.totalCents / 100);
+        setPlaceError(
+          `Your total changed to ${formatPrice(err.body.quote.totalCents / 100)}. Check your order and place it again.`
+        );
+      } else {
+        setPlaceError(err instanceof ApiError ? err.message : "We couldn't place your order. Please try again.");
+      }
+    }
   }
 
   if (!cart.hydrated) {
@@ -329,6 +356,12 @@ export default function CheckoutPage() {
             <div className="mt-6 lg:hidden">
               <OrderSummary items={cart.items} totals={cart.totals} showItems={false} />
             </div>
+          )}
+
+          {step === 5 && placeError && (
+            <p role="alert" className="mt-6 rounded-2xl border border-ember/40 bg-ember/10 px-4 py-3 text-sm text-cream">
+              {placeError}
+            </p>
           )}
 
           <div

@@ -21,7 +21,8 @@ import {
 import { useAccountModal } from "@/context/account-modal-context";
 import { getAllOrders, deriveStatus, orderDisplayNumber, ORDER_RETENTION_DAYS, MAX_STORED_ORDERS } from "@/lib/orders";
 import { clearAllLocalData } from "@/lib/local-data";
-import { PlacedOrder } from "@/types";
+import { OrderStatus, PlacedOrder } from "@/types";
+import { ApiError, fetchOrder, getOrderRefs, orderDtoToPlacedOrder, orderHref } from "@/lib/order-client";
 import { formatPrice } from "@/lib/utils";
 import { useCartActions } from "@/context/cart-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -36,6 +37,9 @@ export function AccountModal() {
 
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "rewards">(initialTab || "orders");
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  const [serverStatuses, setServerStatuses] = useState<Record<string, OrderStatus>>({});
+  const [orderLinks, setOrderLinks] = useState<Record<string, string>>({});
+  const [ordersError, setOrdersError] = useState(false);
   const [profile, setProfile] = useState<SavedUserProfile>(getSavedUserProfile);
   const [profileSaved, setProfileSaved] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -49,14 +53,32 @@ export function AccountModal() {
     if (!isOpen) return;
     // Orders and profile live in localStorage, unavailable during SSR — this
     // read can only happen client-side after mount.
-    const all = getAllOrders();
-    const sorted = Object.values(all).sort(
-      (a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
-    );
+    // Orders placed before the backend existed are still kept on this device.
+    const legacy = Object.values(getAllOrders());
+    const sortByDate = (list: PlacedOrder[]) =>
+      [...list].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrders(sorted);
+    setOrders(sortByDate(legacy));
+    setOrdersError(false);
     setProfile(getSavedUserProfile());
     setProfileSaved(false);
+
+    // Server orders: this device keeps only ids + tracking tokens; fetch the summaries.
+    const refs = getOrderRefs();
+    if (refs.length === 0) return;
+    const controller = new AbortController();
+    Promise.allSettled(refs.map((ref) => fetchOrder(ref.orderId, ref.trackingToken, controller.signal))).then(
+      (results) => {
+        if (controller.signal.aborted) return;
+        const fetched = results.flatMap((r) => (r.status === "fulfilled" ? [orderDtoToPlacedOrder(r.value)] : []));
+        const failed = results.some((r) => r.status === "rejected" && !(r.reason instanceof ApiError && r.reason.status === 404));
+        setServerStatuses(Object.fromEntries(fetched.map((o) => [o.id, o.status])));
+        setOrderLinks(Object.fromEntries(refs.map((r) => [r.orderId, orderHref(r)])));
+        setOrders(sortByDate([...fetched, ...legacy]));
+        setOrdersError(failed);
+      }
+    );
+    return () => controller.abort();
   }, [isOpen]);
 
   function handleSaveProfile(e: FormEvent) {
@@ -198,8 +220,13 @@ export function AccountModal() {
                       <p className="text-[11px] text-cream/60">
                         Your last {MAX_STORED_ORDERS} orders are kept on this device for {ORDER_RETENTION_DAYS} days.
                       </p>
+                      {ordersError && (
+                        <p role="alert" className="text-[11px] text-ember-text">
+                          Some orders couldn&apos;t be loaded right now. Try again in a moment.
+                        </p>
+                      )}
                       {orders.map((order) => {
-                        const { status } = deriveStatus(order);
+                        const status = serverStatuses[order.id] ?? deriveStatus(order).status;
                         const statusColors = {
                           preparing: "bg-amber-500/10 text-amber-400 border-amber-500/30",
                           cooking: "bg-orange-500/10 text-orange-400 border-orange-500/30",
@@ -262,7 +289,7 @@ export function AccountModal() {
 
                             <div className="pt-1">
                               <Link
-                                href={`/order/${order.id}`}
+                                href={orderLinks[order.id] ?? `/order/${order.id}`}
                                 onClick={closeAccount}
                                 className="focus-ring flex items-center justify-center gap-1.5 rounded-full border border-cream/15 bg-charcoal-soft py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:bg-ember-fill hover:text-cream"
                               >

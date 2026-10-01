@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 import { CartItem, FulfillmentMethod } from "@/types";
-import { computeTotals, evaluatePromo, MAX_ITEM_QUANTITY, selectionKey, Totals } from "@/lib/cart";
+import { computeTotals, MAX_ITEM_QUANTITY, PromoResult, selectionKey, Totals, totalsFromQuote } from "@/lib/cart";
+import type { Quote } from "@/lib/api-types";
+import { ApiError, buildQuoteRequest, fetchQuote } from "@/lib/order-client";
 import { CART_STORAGE_KEY, EMPTY_CART_STATE, StoredCartState } from "@/lib/storage-shared";
 import { uid } from "@/lib/utils";
 
@@ -206,20 +208,69 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state, hydrated]);
 
-  const subtotalOnly = useMemo(
-    () => state.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
-    [state.items]
+  // Promo codes are checked by the server: with a code entered, the cart asks
+  // /api/quote (debounced) and shows the server's discount and totals.
+  const quoteRequest = useMemo(
+    () =>
+      state.promoCode && state.items.length > 0
+        ? buildQuoteRequest(state.items, state.fulfillment, state.pickupLocationId, state.promoCode)
+        : null,
+    [state.items, state.fulfillment, state.pickupLocationId, state.promoCode]
+  );
+  const quoteKey = quoteRequest ? JSON.stringify(quoteRequest) : "";
+  const [serverQuote, setServerQuote] = useState<{ key: string; code: string; result: PromoResult; quote: Quote | null } | null>(
+    null
   );
 
-  const promoResult = useMemo(
-    () => evaluatePromo(state.promoCode, subtotalOnly),
-    [state.promoCode, subtotalOnly]
-  );
-  const discount = promoResult.discount;
+  useEffect(() => {
+    if (!quoteRequest) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetchQuote(quoteRequest, controller.signal).then(
+        (quote) =>
+          setServerQuote({
+            key: quoteKey,
+            code: quoteRequest.promoCode ?? "",
+            quote,
+            result: {
+              valid: Boolean(quote.promo?.applied),
+              message: quote.promo?.message ?? "",
+              discount: quote.discountCents / 100,
+            },
+          }),
+        (err: unknown) => {
+          if (controller.signal.aborted) return;
+          const message =
+            err instanceof ApiError && err.status === 422 ? err.message : "We couldn't check that code right now.";
+          setServerQuote({
+            key: quoteKey,
+            code: quoteRequest.promoCode ?? "",
+            quote: null,
+            result: { valid: false, message, discount: 0 },
+          });
+        }
+      );
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [quoteRequest, quoteKey]);
+
+  const promoResult = useMemo<PromoResult>(() => {
+    if (!state.promoCode) return { valid: false, message: "", discount: 0 };
+    // While a re-quote is in flight keep the last answer for this code, so the
+    // discount doesn't flicker when quantities change.
+    if (serverQuote && serverQuote.code === state.promoCode) return serverQuote.result;
+    return { valid: false, message: "Checking code…", discount: 0 };
+  }, [state.promoCode, serverQuote]);
 
   const totals = useMemo(
-    () => computeTotals(state.items, state.fulfillment, discount),
-    [state.items, state.fulfillment, discount]
+    () =>
+      serverQuote?.quote && serverQuote.key === quoteKey
+        ? totalsFromQuote(serverQuote.quote)
+        : computeTotals(state.items, state.fulfillment, promoResult.discount),
+    [serverQuote, quoteKey, state.items, state.fulfillment, promoResult.discount]
   );
 
   const itemCount = useMemo(

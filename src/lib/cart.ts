@@ -87,33 +87,13 @@ export function isSelectionComplete(product: Product, selection: SelectionState)
 export interface PromoResult {
   valid: boolean;
   message: string;
+  /** Dollars, as quoted by the server (/api/quote). */
   discount: number;
 }
 
-const PROMO_CODES: Record<string, { discountPct?: number; flat?: number; minSubtotal?: number; label: string }> = {
-  CRAVE10: { discountPct: 0.1, label: "10% off your order" },
-  WELCOME5: { flat: 5, minSubtotal: 20, label: "$5 off orders over $20" },
-  FEAST20: { discountPct: 0.2, minSubtotal: 40, label: "20% off orders over $40" },
-};
-
-export function evaluatePromo(code: string, subtotal: number): PromoResult {
-  const trimmed = code.trim().toUpperCase();
-  if (!trimmed) return { valid: false, message: "", discount: 0 };
-  const promo = PROMO_CODES[trimmed];
-  if (!promo) {
-    return { valid: false, message: "That code isn't valid.", discount: 0 };
-  }
-  if (promo.minSubtotal && subtotal < promo.minSubtotal) {
-    return {
-      valid: false,
-      message: `Add $${(promo.minSubtotal - subtotal).toFixed(2)} more to use this code.`,
-      discount: 0,
-    };
-  }
-  const discount = promo.flat ?? Math.round(subtotal * (promo.discountPct ?? 0) * 100) / 100;
-  return { valid: true, message: promo.label, discount };
-}
-
+// Display-only estimates. Promo codes are validated and every order is priced by
+// the server (src/server/pricing.ts); these mirror its integer-cent rules so the
+// cart shows the same numbers before a quote comes back. Nothing here is trusted.
 export const TAX_RATE = 0.0825;
 export const DELIVERY_FEE = 3.49;
 export const FREE_DELIVERY_THRESHOLD = 35;
@@ -126,24 +106,43 @@ export interface Totals {
   total: number;
 }
 
+const cents = (dollars: number) => Math.round(dollars * 100);
+
+/** Display estimate of the order totals for a server-quoted discount (dollars). */
 export function computeTotals(
   items: CartItem[],
   fulfillment: "delivery" | "pickup",
   discount: number
 ): Totals {
-  const subtotal = Math.round(
-    items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) * 100
-  ) / 100;
+  const subtotalC = items.reduce((sum, item) => sum + cents(item.unitPrice) * item.quantity, 0);
+  const feeC =
+    fulfillment === "delivery" && subtotalC > 0 && subtotalC < cents(FREE_DELIVERY_THRESHOLD) ? cents(DELIVERY_FEE) : 0;
+  const discountC = Math.min(cents(discount), subtotalC);
+  const taxableC = subtotalC - discountC;
+  // Half-up on integer cents, as the server does.
+  const taxC = Math.floor((taxableC * 825 * 2 + 10_000) / 20_000);
+  return {
+    subtotal: subtotalC / 100,
+    deliveryFee: feeC / 100,
+    discount: discountC / 100,
+    tax: taxC / 100,
+    total: (taxableC + feeC + taxC) / 100,
+  };
+}
 
-  const deliveryFee =
-    fulfillment === "delivery" && subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD
-      ? DELIVERY_FEE
-      : 0;
-
-  const cappedDiscount = Math.min(discount, subtotal);
-  const taxable = Math.max(subtotal - cappedDiscount, 0);
-  const tax = Math.round(taxable * TAX_RATE * 100) / 100;
-  const total = Math.round((taxable + deliveryFee + tax) * 100) / 100;
-
-  return { subtotal, deliveryFee, discount: cappedDiscount, tax, total };
+/** Totals from a server quote (authoritative). */
+export function totalsFromQuote(q: {
+  subtotalCents: number;
+  deliveryFeeCents: number;
+  discountCents: number;
+  taxCents: number;
+  totalCents: number;
+}): Totals {
+  return {
+    subtotal: q.subtotalCents / 100,
+    deliveryFee: q.deliveryFeeCents / 100,
+    discount: q.discountCents / 100,
+    tax: q.taxCents / 100,
+    total: q.totalCents / 100,
+  };
 }
