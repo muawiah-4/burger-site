@@ -4,6 +4,11 @@ function u(id: string, w = 1200): string {
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
 }
 
+// Same photo, zoomed to a different focal point, so a reused shot doesn't read as a repeat.
+function uFocus(id: string, x: number, y: number, zoom: number, w = 1200): string {
+  return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&crop=focalpoint&fp-x=${x}&fp-y=${y}&fp-z=${zoom}&w=${w}&q=80`;
+}
+
 export const img = {
   // Burgers
   burgerClassic: u("1550317138-10000687a72b"),
@@ -67,4 +72,22 @@ export const img = {
   // Editorial / marketing
   editorialBeef: u("1571091655789-405eb7a3a3a8"),
   editorialKnifeBurger: u("1499028344343-cd173ffc68a9"),
+
+  // Category tiles: shots used nowhere else, so the home page doesn't repeat itself.
+  tileBurgers: u("1572802419224-296b0aeee0d9", 800),
+  tilePizza: u("1593560708920-61dd98c46a4e", 800),
+  tileChicken: u("1569058242253-92a9c755a0ec", 800),
+  tileWraps: uFocus("1626700051175-6818013e1d4f", 0.55, 0.45, 1.5, 800),
+  tileSandwiches: u("1481070414801-51fd732d7184", 800),
+  tileSides: u("1630384060421-cb20d0e0649d", 800),
+  tileDesserts: u("1578985545062-69928b1d9587", 800),
+  tileDrinks: u("1553787499-6f9133860278", 800),
+
+  // Deal cards
+  dealTwoForOne: u("1603064752734-4c48eff53d05"),
+  dealCouples: u("1594212699903-ec8a3eca50f5"),
+  dealFamilyFeast: u("1604382354936-07c5d9983bd3"),
+  dealPizzaSides: u("1594007654729-407eedc4be65"),
+  dealChickenBucket: u("1567620832903-9fc6debc209f"),
+  dealPartyBox: u("1561758033-d89a9ad46330"),
 };
