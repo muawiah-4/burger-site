@@ -120,9 +120,14 @@ export default function OrderPage() {
                   {item.quantity}× {item.name}
                 </p>
                 {item.selectedOptions.length > 0 && (
-                  <p className="text-xs text-cream/60">
-                    {item.selectedOptions.map((o) => o.choiceLabels.join(", ")).join(" · ")}
-                  </p>
+                  <ul className="mt-0.5 text-xs leading-relaxed text-cream/60">
+                    {item.selectedOptions.map((o) => (
+                      <li key={o.groupId}>
+                        <span className="font-semibold text-cream/70">{o.groupLabel}:</span>{" "}
+                        {o.choiceLabels.join(", ")}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
               <span className="font-display text-sm font-bold text-cream">

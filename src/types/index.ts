@@ -15,6 +15,8 @@ export interface Category {
   description: string;
 }
 
+export type Allergen = "gluten" | "dairy" | "egg" | "soy" | "sesame" | "nuts";
+
 export type Badge = "best-seller" | "new" | "spicy" | "veggie";
 
 export interface OptionChoice {
@@ -43,6 +45,10 @@ export interface Product {
   image: string;
   rating: number;
   reviewCount: number;
+  /** Major allergens present in the default build (illustrative data). */
+  allergens: Allergen[];
+  /** Approximate calories for the default build (illustrative data). */
+  calories: number;
   ingredients: string[];
   optionGroups: OptionGroup[];
   badges?: Badge[];
