@@ -111,7 +111,8 @@ export function Mascot() {
     <div
       ref={rootRef}
       className={cn(
-        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-3 z-30 flex-col items-end gap-2 transition-opacity duration-300 sm:bottom-7 sm:right-7",
+        // --cart-bar-h is set while the phone/tablet cart bar is showing (CartFeedback).
+        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem+var(--cart-bar-h,0px))] right-3 z-30 flex-col items-end gap-2 transition-opacity duration-300 sm:bottom-[calc(1.75rem+var(--cart-bar-h,0px))] sm:right-7 lg:bottom-7",
         hideOnMobile ? "hidden sm:flex" : "flex"
       )}
       style={nearFooter ? { opacity: 0, pointerEvents: "none" } : undefined}

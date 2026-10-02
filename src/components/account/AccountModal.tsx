@@ -21,8 +21,10 @@ import {
 import { useAccountModal } from "@/context/account-modal-context";
 import { getAllOrders, deriveStatus, orderDisplayNumber, ORDER_RETENTION_DAYS, MAX_STORED_ORDERS } from "@/lib/orders";
 import { clearAllLocalData } from "@/lib/local-data";
-import { PlacedOrder } from "@/types";
+import { OrderStatus, PlacedOrder } from "@/types";
+import { ApiError, fetchOrder, getOrderRefs, orderDtoToPlacedOrder, orderHref } from "@/lib/order-client";
 import { formatPrice } from "@/lib/utils";
+import { summarizeRewards } from "@/lib/rewards";
 import { useCartActions } from "@/context/cart-context";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useDialog } from "@/hooks/useDialog";
@@ -36,6 +38,9 @@ export function AccountModal() {
 
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "rewards">(initialTab || "orders");
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  const [serverStatuses, setServerStatuses] = useState<Record<string, OrderStatus>>({});
+  const [orderLinks, setOrderLinks] = useState<Record<string, string>>({});
+  const [ordersError, setOrdersError] = useState(false);
   const [profile, setProfile] = useState<SavedUserProfile>(getSavedUserProfile);
   const [profileSaved, setProfileSaved] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -49,14 +54,32 @@ export function AccountModal() {
     if (!isOpen) return;
     // Orders and profile live in localStorage, unavailable during SSR — this
     // read can only happen client-side after mount.
-    const all = getAllOrders();
-    const sorted = Object.values(all).sort(
-      (a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
-    );
+    // Orders placed before the backend existed are still kept on this device.
+    const legacy = Object.values(getAllOrders());
+    const sortByDate = (list: PlacedOrder[]) =>
+      [...list].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrders(sorted);
+    setOrders(sortByDate(legacy));
+    setOrdersError(false);
     setProfile(getSavedUserProfile());
     setProfileSaved(false);
+
+    // Server orders: this device keeps only ids + tracking tokens; fetch the summaries.
+    const refs = getOrderRefs();
+    if (refs.length === 0) return;
+    const controller = new AbortController();
+    Promise.allSettled(refs.map((ref) => fetchOrder(ref.orderId, ref.trackingToken, controller.signal))).then(
+      (results) => {
+        if (controller.signal.aborted) return;
+        const fetched = results.flatMap((r) => (r.status === "fulfilled" ? [orderDtoToPlacedOrder(r.value)] : []));
+        const failed = results.some((r) => r.status === "rejected" && !(r.reason instanceof ApiError && r.reason.status === 404));
+        setServerStatuses(Object.fromEntries(fetched.map((o) => [o.id, o.status])));
+        setOrderLinks(Object.fromEntries(refs.map((r) => [r.orderId, orderHref(r)])));
+        setOrders(sortByDate([...fetched, ...legacy]));
+        setOrdersError(failed);
+      }
+    );
+    return () => controller.abort();
   }, [isOpen]);
 
   function handleSaveProfile(e: FormEvent) {
@@ -198,8 +221,13 @@ export function AccountModal() {
                       <p className="text-[11px] text-cream/60">
                         Your last {MAX_STORED_ORDERS} orders are kept on this device for {ORDER_RETENTION_DAYS} days.
                       </p>
+                      {ordersError && (
+                        <p role="alert" className="text-[11px] text-ember-text">
+                          Some orders couldn&apos;t be loaded right now. Try again in a moment.
+                        </p>
+                      )}
                       {orders.map((order) => {
-                        const { status } = deriveStatus(order);
+                        const status = serverStatuses[order.id] ?? deriveStatus(order).status;
                         const statusColors = {
                           preparing: "bg-amber-500/10 text-amber-400 border-amber-500/30",
                           cooking: "bg-orange-500/10 text-orange-400 border-orange-500/30",
@@ -262,7 +290,7 @@ export function AccountModal() {
 
                             <div className="pt-1">
                               <Link
-                                href={`/order/${order.id}`}
+                                href={orderLinks[order.id] ?? `/order/${order.id}`}
                                 onClick={closeAccount}
                                 className="focus-ring flex items-center justify-center gap-1.5 rounded-full border border-cream/15 bg-charcoal-soft py-2 text-xs font-bold text-cream transition-colors hover:border-ember hover:bg-ember-fill hover:text-cream"
                               >
@@ -393,33 +421,7 @@ export function AccountModal() {
               {activeTab === "rewards" && (
                 <div className="flex flex-col gap-4">
                   {/* Tier Card */}
-                  <div className="rounded-3xl bg-charcoal p-5 text-cream">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-charcoal">
-                          <Flame size={16} className="fill-current" />
-                        </span>
-                        <div>
-                          <span className="font-display text-xs font-bold uppercase tracking-wider text-gold">
-                            Flame Club Member
-                          </span>
-                          <h3 className="font-display text-lg font-extrabold">450 Points</h3>
-                        </div>
-                      </div>
-                      <span className="rounded-full bg-cream/15 px-3 py-1 text-[10px] font-bold tracking-widest text-cream">
-                        TIER 1
-                      </span>
-                    </div>
-                    <div className="mt-4">
-                      <div className="h-1.5 w-full rounded-full bg-cream/15">
-                        <div className="h-1.5 rounded-full bg-ember" style={{ width: "75%" }} />
-                      </div>
-                      <div className="mt-1.5 flex justify-between text-[11px] text-cream/60">
-                        <span>50 pts to Free Smash Burger</span>
-                        <span>500 pts</span>
-                      </div>
-                    </div>
-                  </div>
+                  <RewardsCard orders={orders} />
 
                   {/* Promo Rewards */}
                   <div className="flex flex-col gap-3">
@@ -577,5 +579,55 @@ function ClearDataSection({ onClear }: { onClear: () => boolean }) {
         {result === "failed" && <span className="text-ember-text">Couldn&apos;t access browser storage.</span>}
       </p>
     </section>
+  );
+}
+
+function RewardsCard({ orders }: { orders: PlacedOrder[] }) {
+  const rewards = summarizeRewards(orders);
+  const pct = Math.round(rewards.progress * 100);
+  return (
+    <div className="rounded-3xl bg-charcoal p-5 text-cream" data-testid="rewards-card">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-charcoal">
+            <Flame size={16} className="fill-current" />
+          </span>
+          <div>
+            <span className="font-display text-xs font-bold uppercase tracking-wider text-gold">
+              {rewards.tier.name} Member
+            </span>
+            <h3 className="font-display text-lg font-extrabold">
+              {rewards.points.toLocaleString("en-US")} Points
+            </h3>
+          </div>
+        </div>
+        <span className="rounded-full bg-cream/15 px-3 py-1 text-[10px] font-bold tracking-widest text-cream">
+          TIER {rewards.tierIndex + 1}
+        </span>
+      </div>
+      <div className="mt-4">
+        <div
+          className="h-1.5 w-full rounded-full bg-cream/15"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label={rewards.nextTier ? `Progress to ${rewards.nextTier.name}` : "Top tier reached"}
+        >
+          <div className="h-1.5 rounded-full bg-ember" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-1.5 flex justify-between text-[11px] text-cream/60">
+          <span>
+            {rewards.nextTier
+              ? `${rewards.toNext.toLocaleString("en-US")} pts to ${rewards.nextTier.name}`
+              : "You've reached the top tier"}
+          </span>
+          <span>{rewards.nextTier ? `${rewards.nextTier.min.toLocaleString("en-US")} pts` : "Inferno"}</span>
+        </div>
+        <p className="mt-2 text-[11px] text-cream/60">
+          10 pts per $1 of subtotal, from the orders saved on this device.
+        </p>
+      </div>
+    </div>
   );
 }

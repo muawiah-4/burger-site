@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 import { CartItem, FulfillmentMethod } from "@/types";
-import { computeTotals, evaluatePromo, MAX_ITEM_QUANTITY, selectionKey, Totals } from "@/lib/cart";
+import { computeTotals, MAX_ITEM_QUANTITY, PromoResult, selectionKey, Totals, totalsFromQuote } from "@/lib/cart";
+import type { Quote } from "@/lib/api-types";
+import { ApiError, buildQuoteRequest, fetchQuote } from "@/lib/order-client";
 import { CART_STORAGE_KEY, EMPTY_CART_STATE, StoredCartState } from "@/lib/storage-shared";
 import { uid } from "@/lib/utils";
 
@@ -151,10 +153,19 @@ const CartStateContext = createContext<CartStateValue | null>(null);
 const CartOpenContext = createContext<boolean | null>(null);
 const CartActionsContext = createContext<CartActions | null>(null);
 
+/** The most recent add, for the "Added · View cart" toast and badge bump. `id` ticks on every add. */
+export interface LastAdded {
+  id: number;
+  name: string;
+  quantity: number;
+}
+const LastAddedContext = createContext<LastAdded | null | undefined>(undefined);
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [lastAdded, setLastAdded] = useState<LastAdded | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,20 +217,69 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state, hydrated]);
 
-  const subtotalOnly = useMemo(
-    () => state.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
-    [state.items]
+  // Promo codes are checked by the server: with a code entered, the cart asks
+  // /api/quote (debounced) and shows the server's discount and totals.
+  const quoteRequest = useMemo(
+    () =>
+      state.promoCode && state.items.length > 0
+        ? buildQuoteRequest(state.items, state.fulfillment, state.pickupLocationId, state.promoCode)
+        : null,
+    [state.items, state.fulfillment, state.pickupLocationId, state.promoCode]
+  );
+  const quoteKey = quoteRequest ? JSON.stringify(quoteRequest) : "";
+  const [serverQuote, setServerQuote] = useState<{ key: string; code: string; result: PromoResult; quote: Quote | null } | null>(
+    null
   );
 
-  const promoResult = useMemo(
-    () => evaluatePromo(state.promoCode, subtotalOnly),
-    [state.promoCode, subtotalOnly]
-  );
-  const discount = promoResult.discount;
+  useEffect(() => {
+    if (!quoteRequest) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetchQuote(quoteRequest, controller.signal).then(
+        (quote) =>
+          setServerQuote({
+            key: quoteKey,
+            code: quoteRequest.promoCode ?? "",
+            quote,
+            result: {
+              valid: Boolean(quote.promo?.applied),
+              message: quote.promo?.message ?? "",
+              discount: quote.discountCents / 100,
+            },
+          }),
+        (err: unknown) => {
+          if (controller.signal.aborted) return;
+          const message =
+            err instanceof ApiError && err.status === 422 ? err.message : "We couldn't check that code right now.";
+          setServerQuote({
+            key: quoteKey,
+            code: quoteRequest.promoCode ?? "",
+            quote: null,
+            result: { valid: false, message, discount: 0 },
+          });
+        }
+      );
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [quoteRequest, quoteKey]);
+
+  const promoResult = useMemo<PromoResult>(() => {
+    if (!state.promoCode) return { valid: false, message: "", discount: 0 };
+    // While a re-quote is in flight keep the last answer for this code, so the
+    // discount doesn't flicker when quantities change.
+    if (serverQuote && serverQuote.code === state.promoCode) return serverQuote.result;
+    return { valid: false, message: "Checking code…", discount: 0 };
+  }, [state.promoCode, serverQuote]);
 
   const totals = useMemo(
-    () => computeTotals(state.items, state.fulfillment, discount),
-    [state.items, state.fulfillment, discount]
+    () =>
+      serverQuote?.quote && serverQuote.key === quoteKey
+        ? totalsFromQuote(serverQuote.quote)
+        : computeTotals(state.items, state.fulfillment, promoResult.discount),
+    [serverQuote, quoteKey, state.items, state.fulfillment, promoResult.discount]
   );
 
   const itemCount = useMemo(
@@ -236,7 +296,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         for (const opt of item.selectedOptions) selection[opt.groupId] = opt.choiceIds;
         const key = selectionKey(item.productId, selection);
         dispatch({ type: "ADD_ITEM", item, key });
-        setIsOpen(true);
+        // No drawer: a toast confirms the add and offers "View cart" instead.
+        setLastAdded((prev) => ({ id: (prev?.id ?? 0) + 1, name: item.name, quantity: item.quantity }));
       },
       removeItem: (cartItemId) => dispatch({ type: "REMOVE_ITEM", cartItemId }),
       updateQuantity: (cartItemId, quantity) => dispatch({ type: "UPDATE_QUANTITY", cartItemId, quantity }),
@@ -268,7 +329,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   return (
     <CartActionsContext.Provider value={actions}>
       <CartStateContext.Provider value={cartState}>
-        <CartOpenContext.Provider value={isOpen}>{children}</CartOpenContext.Provider>
+        <CartOpenContext.Provider value={isOpen}>
+          <LastAddedContext.Provider value={lastAdded}>{children}</LastAddedContext.Provider>
+        </CartOpenContext.Provider>
       </CartStateContext.Provider>
     </CartActionsContext.Provider>
   );
@@ -288,6 +351,13 @@ export function useCartActions(): CartActions {
 /** Cart contents, totals and promo state. Re-renders when the cart changes. */
 export function useCartState(): CartStateValue {
   return useRequired(CartStateContext, "useCartState");
+}
+
+/** The latest add-to-cart (null until the first add this session). */
+export function useLastAdded(): LastAdded | null {
+  const value = useContext(LastAddedContext);
+  if (value === undefined) throw new Error("useLastAdded must be used within CartProvider");
+  return value;
 }
 
 /** Whether the cart drawer is open. */

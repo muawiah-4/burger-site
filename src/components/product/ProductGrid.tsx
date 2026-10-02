@@ -30,7 +30,9 @@ export function ProductGrid({
     <LayoutMotion>
       <m.div
         layout
-        className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
+        // popLayout pops exiting cards out with position:absolute; they're placed
+        // relative to this grid.
+        className="relative grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
       >
         <AnimatePresence mode="popLayout">
           {products.map((product, i) => (

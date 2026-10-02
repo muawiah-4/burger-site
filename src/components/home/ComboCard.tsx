@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import * as m from "motion/react-m";
 import { Deal } from "@/types";
@@ -8,6 +8,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import { DEAL_PRODUCT_PREFIX } from "@/lib/cart";
 import { Button } from "@/components/ui/Button";
 import { useCartActions } from "@/context/cart-context";
+import { useFlyToCartActions } from "@/context/fly-to-cart-context";
 
 /** The slice of a product the combo builder needs; the server passes only these. */
 export interface ComboChoice {
@@ -80,6 +81,8 @@ export function ComboCard({
   switcher?: React.ReactNode;
 }) {
   const { addItem } = useCartActions();
+  const { launch } = useFlyToCartActions();
+  const galleryRef = useRef<HTMLDivElement>(null);
   const [itemId, setItemId] = useState(items[0].id);
   const [drinkId, setDrinkId] = useState(drinks[0].id);
 
@@ -98,6 +101,7 @@ export function ComboCard({
       { groupId: "drink", groupLabel: "Drink", choiceIds: [drinkId], choiceLabels: [selectedDrink.name], priceDelta: 0 },
     ];
 
+    launch(galleryRef.current, selectedItem.image);
     addItem({
       productId: `${DEAL_PRODUCT_PREFIX}${deal.id}`,
       slug: deal.slug,
@@ -150,7 +154,7 @@ export function ComboCard({
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="order-1 grid grid-cols-2 gap-3 lg:order-2"
       >
-        <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">
+        <div ref={galleryRef} className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl">
           <Image src={gallery[0]} alt={selectedItem.name} fill sizes="(min-width: 1280px) 504px, (min-width: 1024px) calc((100vw - 160px) * 0.45), (min-width: 640px) calc(100vw - 144px), calc(100vw - 88px)" className="object-cover" />
         </div>
         <div className="relative aspect-square overflow-hidden rounded-3xl">

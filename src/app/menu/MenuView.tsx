@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as m from "motion/react-m";
-import { Search, X, Flame, TrendingUp, Leaf } from "lucide-react";
+import { Search, X, Flame, TrendingUp, Leaf, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import { products } from "@/lib/data/products";
 import { categories } from "@/lib/data/categories";
 import { deals } from "@/lib/data/deals";
-import { CategoryId, Product } from "@/types";
+import { Allergen, CategoryId, Product } from "@/types";
+import { ALLERGENS } from "@/lib/data/allergens";
+import { useFlyToCartActions } from "@/context/fly-to-cart-context";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { cn, formatPrice } from "@/lib/utils";
 import { buildDealCartItem } from "@/lib/cart";
@@ -53,9 +55,14 @@ export function MenuView() {
   const [popularOnly, setPopularOnly] = useState(false);
   const [vegOnly, setVegOnly] = useState(false);
   const [spicyOnly, setSpicyOnly] = useState(false);
+  const [excludedAllergens, setExcludedAllergens] = useState<Allergen[]>([]);
+  // Phones show one sticky row (category chips + "Filters"); this reveals the rest.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { addItem } = useCartActions();
+  const { launch } = useFlyToCartActions();
+  const isDeals = category === "deals";
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
@@ -77,9 +84,28 @@ export function MenuView() {
       if (popularOnly && !p.isPopular) return false;
       if (vegOnly && !p.isVegetarian) return false;
       if (spicyOnly && !p.isSpicy) return false;
+      if (excludedAllergens.some((a) => p.allergens.includes(a))) return false;
       return true;
     });
-  }, [search, category, priceMax, popularOnly, vegOnly, spicyOnly]);
+  }, [search, category, priceMax, popularOnly, vegOnly, spicyOnly, excludedAllergens]);
+
+  // Deals have no dietary or allergen data, so only search and price apply to them.
+  const filteredDeals = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return deals.filter((d) => {
+      if (d.price > priceMax) return false;
+      if (!q) return true;
+      return `${d.name} ${d.description} ${d.includes.join(" ")}`.toLowerCase().includes(q);
+    });
+  }, [search, priceMax]);
+
+  const activeFilterCount =
+    (priceId !== "any" ? 1 : 0) +
+    (isDeals ? 0 : (popularOnly ? 1 : 0) + (vegOnly ? 1 : 0) + (spicyOnly ? 1 : 0) + excludedAllergens.length);
+
+  function toggleAllergen(id: Allergen) {
+    setExcludedAllergens((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
+  }
 
   const sections = useMemo(() => {
     const byCategory = new Map<CategoryId, Product[]>();
@@ -93,9 +119,10 @@ export function MenuView() {
       .filter((s) => s.items.length > 0);
   }, [filtered]);
 
-  function addDealToCart(dealId: string) {
+  function addDealToCart(dealId: string, source: HTMLElement | null) {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
+    launch(source, deal.image);
     addItem(buildDealCartItem(deal));
   }
 
@@ -108,74 +135,126 @@ export function MenuView() {
         </h1>
       </div>
 
-      <div className="sticky top-16 z-20 mt-8 -mx-5 bg-charcoal/95 px-5 py-4 backdrop-blur sm:relative sm:top-0 sm:mx-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
-        <div className="relative">
-          <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-cream/60" />
-          <input
-            ref={searchInputRef}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search burgers, pizza, chicken, fries…"
-            className="focus-ring w-full rounded-full border border-cream/15 bg-charcoal-raised py-3.5 pl-11 pr-10 text-sm text-cream placeholder:text-cream/60"
-            aria-label="Search menu"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              aria-label="Clear search"
-              className="focus-ring absolute right-4 top-1/2 -translate-y-1/2 text-cream/60 transition-transform active:scale-90 hover:text-cream"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
-        <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1">
-          <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
-            All
-          </CategoryChip>
-          {categories.map((cat) => (
-            <CategoryChip key={cat.id} active={category === cat.id} onClick={() => setCategory(cat.id)}>
-              {cat.name}
-            </CategoryChip>
-          ))}
-          <CategoryChip active={category === "deals"} onClick={() => setCategory("deals")}>
-            <Flame size={12} className="fill-current" />
-            Deals
-          </CategoryChip>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <select
-            value={priceId}
-            onChange={(e) => setPriceId(e.target.value)}
-            className="focus-ring rounded-full border border-cream/15 bg-charcoal-raised px-3.5 py-1.5 text-xs font-semibold text-cream"
-            aria-label="Filter by price"
+      <div className="relative mt-8">
+        <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-cream/60" />
+        <input
+          ref={searchInputRef}
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={isDeals ? "Search deals…" : "Search burgers, pizza, chicken, fries…"}
+          className="focus-ring w-full rounded-full border border-cream/15 bg-charcoal-raised py-3.5 pl-11 pr-10 text-sm text-cream placeholder:text-cream/60 [&::-webkit-search-cancel-button]:hidden"
+          aria-label={isDeals ? "Search deals" : "Search menu"}
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+            className="focus-ring absolute right-4 top-1/2 -translate-y-1/2 text-cream/60 transition-transform active:scale-90 hover:text-cream"
           >
-            {PRICE_OPTIONS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Phones: a single sticky row of chips plus a Filters toggle. sm+: everything inline. */}
+      <div className="sticky top-16 z-20 -mx-5 mt-3 bg-charcoal/95 px-5 py-3 backdrop-blur sm:relative sm:top-0 sm:mx-0 sm:mt-4 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+        <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto scrollbar-none pb-1">
+            <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
+              All
+            </CategoryChip>
+            {categories.map((cat) => (
+              <CategoryChip key={cat.id} active={category === cat.id} onClick={() => setCategory(cat.id)}>
+                {cat.name}
+              </CategoryChip>
             ))}
-          </select>
-          <ToggleChip active={popularOnly} onClick={() => setPopularOnly((v) => !v)} icon={<TrendingUp size={12} />}>
-            Popular
-          </ToggleChip>
-          <ToggleChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf size={12} />}>
-            Vegetarian
-          </ToggleChip>
-          <ToggleChip active={spicyOnly} onClick={() => setSpicyOnly((v) => !v)} icon={<Flame size={12} />}>
-            Spicy
-          </ToggleChip>
+            <CategoryChip active={isDeals} onClick={() => setCategory("deals")}>
+              <Flame size={12} className="fill-current" />
+              Deals
+            </CategoryChip>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            aria-controls="menu-filters"
+            className={cn(
+              "focus-ring mb-1 flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-display font-bold uppercase tracking-wide transition-all active:scale-95 sm:hidden",
+              filtersOpen || activeFilterCount > 0
+                ? "border-ember bg-ember/10 text-cream"
+                : "border-cream/10 bg-charcoal-raised text-cream/70"
+            )}
+          >
+            <SlidersHorizontal size={13} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-ember-fill px-1 text-[10px] text-cream">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div
+          id="menu-filters"
+          className={cn("mt-3 flex-col gap-3 sm:flex", filtersOpen ? "flex" : "hidden")}
+        >
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={priceId}
+              onChange={(e) => setPriceId(e.target.value)}
+              className="focus-ring rounded-full border border-cream/15 bg-charcoal-raised px-3.5 py-1.5 text-xs font-semibold text-cream"
+              aria-label="Filter by price"
+            >
+              {PRICE_OPTIONS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            {!isDeals && (
+              <>
+                <ToggleChip active={popularOnly} onClick={() => setPopularOnly((v) => !v)} icon={<TrendingUp size={12} />}>
+                  Popular
+                </ToggleChip>
+                <ToggleChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf size={12} />}>
+                  Vegetarian
+                </ToggleChip>
+                <ToggleChip active={spicyOnly} onClick={() => setSpicyOnly((v) => !v)} icon={<Flame size={12} />}>
+                  Spicy
+                </ToggleChip>
+              </>
+            )}
+          </div>
+          {!isDeals && (
+            <div role="group" aria-labelledby="allergen-filter-label" className="flex flex-wrap items-center gap-2">
+              <span id="allergen-filter-label" className="text-xs font-semibold text-cream/60">
+                Hide items with…
+              </span>
+              {ALLERGENS.map((a) => (
+                <ToggleChip
+                  key={a.id}
+                  active={excludedAllergens.includes(a.id)}
+                  onClick={() => toggleAllergen(a.id)}
+                  icon={excludedAllergens.includes(a.id) ? <X size={12} /> : null}
+                >
+                  {a.label}
+                </ToggleChip>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="mt-10">
-        {category === "deals" ? (
+        {isDeals && filteredDeals.length === 0 ? (
+          <ProductGrid products={[]} emptyMessage="No deals match your search." />
+        ) : isDeals ? (
           <LayoutMotion>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {deals.map((deal, i) => {
+              {filteredDeals.map((deal, i) => {
                 const savings = Math.round((deal.originalPrice - deal.price) * 100) / 100;
                 return (
                   <m.div
@@ -188,9 +267,10 @@ export function MenuView() {
                       delay: (i % 3) * 0.06,
                       ease: [0.22, 1, 0.36, 1],
                     }}
+                    data-deal-card
                     className="flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised"
                   >
-                    <div className="relative aspect-[16/10]">
+                    <div className="relative aspect-[16/10]" data-fly-source>
                       <Image src={deal.image} alt={deal.name} fill sizes="(min-width: 1280px) 392px, (min-width: 1024px) calc((100vw - 104px) / 3), (min-width: 640px) calc((100vw - 84px) / 2), calc(100vw - 40px)" className="object-cover" />
                       <div className="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase text-charcoal">
                         Save {formatPrice(savings)}
@@ -203,7 +283,12 @@ export function MenuView() {
                         <span className="font-display text-2xl font-extrabold text-cream">{formatPrice(deal.price)}</span>
                         <span className="pb-0.5 text-sm text-cream/60 line-through">{formatPrice(deal.originalPrice)}</span>
                       </div>
-                      <Button variant="primary" className="mt-4 w-full" onClick={() => addDealToCart(deal.id)}>
+                      <Button variant="primary" className="mt-4 w-full" onClick={(e) =>
+                          addDealToCart(
+                            deal.id,
+                            e.currentTarget.closest("[data-deal-card]")?.querySelector<HTMLElement>("[data-fly-source]") ?? null
+                          )
+                        }>
                         {deal.ctaLabel}
                       </Button>
                     </div>

@@ -23,9 +23,9 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      // Documents only: skip build assets, the image optimizer, public media and
+      // Documents only: skip JSON API routes, build assets, the image optimizer, public media and
       // metadata files, none of which execute script.
-      source: "/((?!_next/static|_next/image|videos/|favicon.ico|robots.txt|sitemap.xml).*)",
+      source: "/((?!api/|_next/static|_next/image|videos/|favicon.ico|robots.txt|sitemap.xml).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

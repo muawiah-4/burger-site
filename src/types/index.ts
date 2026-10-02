@@ -15,6 +15,8 @@ export interface Category {
   description: string;
 }
 
+export type Allergen = "gluten" | "dairy" | "egg" | "soy" | "sesame" | "nuts";
+
 export type Badge = "best-seller" | "new" | "spicy" | "veggie";
 
 export interface OptionChoice {
@@ -43,6 +45,10 @@ export interface Product {
   image: string;
   rating: number;
   reviewCount: number;
+  /** Major allergens present in the default build (illustrative data). */
+  allergens: Allergen[];
+  /** Approximate calories for the default build (illustrative data). */
+  calories: number;
   ingredients: string[];
   optionGroups: OptionGroup[];
   badges?: Badge[];
@@ -155,4 +161,8 @@ export interface PlacedOrder {
   promoCode?: string;
   placedAt: string;
   estimatedMinutes: [number, number];
+  /** Driver tip in dollars (server orders; already included in total). */
+  tip?: number;
+  /** ISO time for an order placed for later (server orders). */
+  scheduledFor?: string;
 }

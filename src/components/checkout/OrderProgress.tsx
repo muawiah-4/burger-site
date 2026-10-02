@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import * as m from "motion/react-m";
 import { ChefHat, Flame, Bike, ShoppingBag, PartyPopper, Check } from "lucide-react";
-import { PlacedOrder } from "@/types";
+import { OrderStatus, PlacedOrder } from "@/types";
 import { deriveStatus } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +21,24 @@ const PICKUP_STAGES = [
   { id: "delivered", label: "Picked Up", icon: PartyPopper },
 ] as const;
 
-export function OrderProgress({ order }: { order: PlacedOrder }) {
+/** Bar fill for each stage. */
+const STATUS_PROGRESS: Record<OrderStatus, number> = {
+  preparing: 15,
+  cooking: 45,
+  "on-the-way": 75,
+  ready: 90,
+  delivered: 100,
+};
+
+/**
+ * `serverStatus` is the authoritative status from /api/orders; without it (orders
+ * saved on this device before the backend existed) the status is derived from time.
+ */
+export function OrderProgress({ order, serverStatus }: { order: PlacedOrder; serverStatus?: OrderStatus }) {
   const [tick, setTick] = useState(0);
-  const { status, progress } = deriveStatus(order);
+  const derived = deriveStatus(order);
+  const status = serverStatus ?? derived.status;
+  const progress = serverStatus ? STATUS_PROGRESS[serverStatus] : derived.progress;
   // "delivered" is terminal (also covers picked-up pickup orders) — stop re-deriving.
   const isComplete = status === "delivered";
 

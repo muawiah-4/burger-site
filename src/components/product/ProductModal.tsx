@@ -17,6 +17,7 @@ import {
   SelectionState,
 } from "@/lib/cart";
 import { formatPrice, cn } from "@/lib/utils";
+import { allergenLabel } from "@/lib/data/allergens";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { Badge } from "@/components/ui/Badge";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
@@ -185,6 +186,19 @@ function ProductModalPanel({
               ))}
             </div>
           )}
+
+          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-2xl border border-cream/10 bg-charcoal-raised p-4 text-xs">
+            <dt className="font-display font-bold uppercase tracking-wider text-cream/60">Calories</dt>
+            <dd className="tabular-nums text-cream">
+              {product.calories} cal <span className="text-cream/60">· default build</span>
+            </dd>
+            <dt className="font-display font-bold uppercase tracking-wider text-cream/60">Allergens</dt>
+            <dd className="text-cream">
+              {product.allergens.length > 0
+                ? product.allergens.map(allergenLabel).join(", ")
+                : "None of the major allergens"}
+            </dd>
+          </dl>
 
           <div className="mt-6 flex flex-col gap-6">
             {product.optionGroups.map((group) => (

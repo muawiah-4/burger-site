@@ -1,13 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import { CustomerInfo, DeliveryAddress, PaymentMethod, PlacedOrder } from "@/types";
-import { generateDisplayNumber, generateOrderId, saveOrder } from "@/lib/orders";
+import { CustomerInfo, DeliveryAddress, PaymentMethod } from "@/types";
+import type { CreateOrderRequest } from "@/lib/api-types";
+import {
+  ApiError,
+  buildQuoteRequest,
+  newIdempotencyKey,
+  orderHref,
+  placeOrderRequest,
+  saveOrderRef,
+} from "@/lib/order-client";
 import { formatPrice } from "@/lib/utils";
 import { getSavedUserProfile } from "@/lib/user-profile";
 import {
@@ -29,6 +37,10 @@ import { ReviewStep } from "@/components/checkout/ReviewStep";
 import { Button } from "@/components/ui/Button";
 import { PageLoading } from "@/components/ui/PageLoading";
 import { DemoNotice } from "@/components/ui/DemoNotice";
+import { locations } from "@/lib/data/locations";
+import { computeTip, NO_TIP, TipChoice } from "@/lib/tip";
+import { generateTimeSlots } from "@/lib/schedule";
+import { clearCheckoutDraft, readCheckoutDraft, saveCheckoutDraft } from "@/lib/checkout-draft";
 
 const EMPTY_ADDRESS: DeliveryAddress = { line1: "", line2: "", city: "", zip: "", instructions: "" };
 const EMPTY_CUSTOMER: CustomerInfo = { name: "", phone: "", email: "" };
@@ -65,13 +77,24 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   // Guards against a second click landing before React re-renders with placing=true.
   const placingRef = useRef(false);
-  // Snapshot of the total at submit time: clearCart() zeroes cart.totals while we navigate away.
+  // The total shown on Place Order: the server's total after a 409, and a snapshot
+  // while submitting (clearCart() zeroes cart.totals while we navigate away).
   const [placedTotal, setPlacedTotal] = useState<number | null>(null);
+  const [placeError, setPlaceError] = useState<string | null>(null);
+  const idempotency = useRef<{ key: string; body: string } | null>(null);
 
   const [customer, setCustomer] = useState<CustomerInfo>(EMPTY_CUSTOMER);
   const [address, setAddress] = useState<DeliveryAddress>(EMPTY_ADDRESS);
   const [payment, setPayment] = useState<PaymentMethod>("card");
   const [card, setCard] = useState<CardDetails>(EMPTY_CARD);
+  // The tip choice is sent with the order; the server computes the amount and includes it in the total.
+  const [tipChoice, setTipChoice] = useState<TipChoice>(NO_TIP);
+  const [scheduledFor, setScheduledFor] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | undefined>();
+  const [now, setNow] = useState(() => new Date());
+  // The draft is restored once the cart has hydrated; saving waits for that so the
+  // initial empty state never overwrites it.
+  const [draftRestored, setDraftRestored] = useState(false);
 
   const [customerErrors, setCustomerErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const [addressErrors, setAddressErrors] = useState<Partial<Record<keyof DeliveryAddress, string>>>({});
@@ -123,6 +146,77 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const scheduleLocation =
+    (cart.fulfillment === "pickup" && locations.find((l) => l.id === cart.pickupLocationId)) || locations[0];
+  const slots = useMemo(() => generateTimeSlots(now, scheduleLocation.hours), [now, scheduleLocation.hours]);
+  const tipCents =
+    cart.fulfillment === "delivery" ? computeTip(Math.round(cart.totals.subtotal * 100), tipChoice) : 0;
+  const tip = tipCents / 100;
+
+  useEffect(() => {
+    if (!cart.hydrated || draftRestored) return;
+    const draft = readCheckoutDraft();
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (draft) {
+      // Draft values win; blanks fall back to the saved profile, like the prefill above.
+      const profile = getSavedUserProfile();
+      const restoredCustomer = {
+        name: draft.customer.name || profile.name,
+        phone: draft.customer.phone || profile.phone,
+        email: draft.customer.email || profile.email,
+      };
+      const restoredAddress = {
+        line1: draft.address.line1 || profile.line1,
+        line2: draft.address.line2,
+        city: draft.address.city || profile.city,
+        zip: draft.address.zip || profile.zip,
+        instructions: draft.address.instructions,
+      };
+      setCustomer(restoredCustomer);
+      setAddress(restoredAddress);
+      setPayment(draft.payment);
+      setTipChoice(draft.tip);
+      // A saved time that has since passed (or is too close) falls back to ASAP.
+      const stillOffered =
+        draft.scheduledFor !== null && slots.some((s) => s.toISOString() === draft.scheduledFor);
+      setScheduledFor(stillOffered ? draft.scheduledFor : null);
+      // Resume at the saved step, unless an earlier step is no longer complete.
+      // Card numbers are never saved, so a card payment resumes on the Payment step.
+      let resume = draft.step;
+      const customerOk =
+        isValidName(restoredCustomer.name) && isValidPhone(restoredCustomer.phone) && isValidEmail(restoredCustomer.email);
+      const addressOk =
+        cart.fulfillment === "pickup"
+          ? !!cart.pickupLocationId
+          : !!restoredAddress.line1.trim() && !!restoredAddress.city.trim() && isValidZip(restoredAddress.zip);
+      if (resume > 2 && !customerOk) resume = 2;
+      if (resume > 3 && !addressOk) resume = 3;
+      if (resume > 4 && draft.payment === "card") resume = 4;
+      setStep(resume);
+    }
+    setDraftRestored(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // Runs once, after hydration; the values read here are the initial ones.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.hydrated]);
+
+  useEffect(() => {
+    if (!draftRestored || placingRef.current) return;
+    saveCheckoutDraft({
+      step,
+      customer,
+      address,
+      payment,
+      tip: tipChoice,
+      scheduledFor,
+    });
+  }, [draftRestored, step, customer, address, payment, tipChoice, scheduledFor]);
+
+  useEffect(() => {
     // Wait for the cart to finish reading localStorage before deciding it's
     // empty — otherwise a hard reload on this page bounces straight to /menu.
     if (cart.hydrated && !placing && cart.items.length === 0) {
@@ -171,6 +265,15 @@ export default function CheckoutPage() {
 
   /** Validates the current step, showing its errors and focusing the first invalid field. */
   function validateStep(n: number): boolean {
+    if (n === 1) {
+      if (scheduledFor && !slots.some((s) => s.toISOString() === scheduledFor)) {
+        setScheduleError("That time is no longer available. Pick another slot or choose ASAP.");
+        setFocusRequest({ id: "checkout-schedule" });
+        return false;
+      }
+      setScheduleError(undefined);
+      return true;
+    }
     if (n === 2) {
       const errors = customerErrorsFor();
       setCustomerErrors(errors);
@@ -199,7 +302,13 @@ export default function CheckoutPage() {
 
   function goToStep(n: number) {
     setStep(n);
-    if (n === 5) setEditingFromReview(false);
+    if (n === 5) {
+      setEditingFromReview(false);
+      // Fresh review: show the cart's total and mint the Idempotency-Key for this order.
+      setPlacedTotal(null);
+      setPlaceError(null);
+      idempotency.current = { key: newIdempotencyKey(), body: "" };
+    }
     window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
   }
 
@@ -225,39 +334,57 @@ export default function CheckoutPage() {
     goToStep(Math.max(step - 1, 1));
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     if (placing || placingRef.current || cart.items.length === 0) return;
     placingRef.current = true;
     setPlacing(true);
-    setPlacedTotal(cart.totals.total);
-    const id = generateOrderId();
-    const estimatedMinutes: [number, number] = cart.fulfillment === "delivery" ? [25, 35] : [12, 18];
-    const order: PlacedOrder = {
-      id,
-      displayNumber: generateDisplayNumber(),
-      items: cart.items,
-      fulfillment: cart.fulfillment,
-      // Contact details and the street address are only needed for this session's
-      // review step, so the saved order keeps just the city and ZIP for the tracker.
-      deliveryArea:
-        cart.fulfillment === "delivery" ? { city: address.city.trim(), zip: address.zip.trim() } : undefined,
-      pickupLocationId: cart.fulfillment === "pickup" ? cart.pickupLocationId ?? undefined : undefined,
-      payment,
-      subtotal: cart.totals.subtotal,
-      deliveryFee: cart.totals.deliveryFee,
-      discount: cart.totals.discount,
-      tax: cart.totals.tax,
-      total: cart.totals.total,
-      promoCode: cart.promoValid ? cart.promoCode : undefined,
-      placedAt: new Date().toISOString(),
-      estimatedMinutes,
+    setPlaceError(null);
+    // The server re-prices the order; we send the total the customer is looking at
+    // and it refuses (409 + fresh quote) if its total differs.
+    // The tip is computed with the same computeTip the server uses, so the shown total matches.
+    const shownTotalCents =
+      placedTotal !== null ? Math.round(placedTotal * 100) : Math.round(cart.totals.total * 100) + tipCents;
+    const body: CreateOrderRequest = {
+      ...buildQuoteRequest(cart.items, cart.fulfillment, cart.pickupLocationId, cart.promoValid ? cart.promoCode : ""),
+      ...(cart.fulfillment === "delivery" && tipChoice.kind !== "none" ? { tip: tipChoice } : {}),
+      ...(scheduledFor ? { scheduledFor } : {}),
+      paymentMethod: payment,
+      // Contact details and the street address stay in this page; the server
+      // only receives the city and ZIP for the tracker.
+      ...(cart.fulfillment === "delivery" ? { deliveryArea: { city: address.city.trim(), zip: address.zip.trim() } } : {}),
+      expectedTotalCents: shownTotalCents,
     };
-    saveOrder(order);
-    // Card fields only ever live in this component's state and are never saved;
-    // drop them now rather than keeping them around while we navigate away.
-    setCard(EMPTY_CARD);
-    cart.clearCart();
-    router.push(`/order/${id}`);
+    // One key per distinct order body, created on the Review step: a retry of the
+    // same order (double click, flaky network) can never create a second one.
+    const bodyJson = JSON.stringify(body);
+    if (!idempotency.current || (idempotency.current.body && idempotency.current.body !== bodyJson)) {
+      idempotency.current = { key: newIdempotencyKey(), body: bodyJson };
+    }
+    idempotency.current.body = bodyJson;
+    try {
+      const created = await placeOrderRequest(body, idempotency.current.key);
+      saveOrderRef({ ...created, placedAt: new Date().toISOString() });
+      // Keep the button's total steady while clearCart() zeroes the cart below.
+      setPlacedTotal(shownTotalCents / 100);
+      // Card fields only ever live in this component's state and are never saved
+      // or sent; drop them now rather than keeping them around while we navigate away.
+      setCard(EMPTY_CARD);
+      // placingRef stays true from here, so the draft-saving effect can't write it back.
+      clearCheckoutDraft();
+      cart.clearCart();
+      router.push(orderHref(created));
+    } catch (err) {
+      placingRef.current = false;
+      setPlacing(false);
+      if (err instanceof ApiError && err.code === "total_mismatch" && err.body?.quote) {
+        setPlacedTotal(err.body.quote.totalCents / 100);
+        setPlaceError(
+          `Your total changed to ${formatPrice(err.body.quote.totalCents / 100)}. Check your order and place it again.`
+        );
+      } else {
+        setPlaceError(err instanceof ApiError ? err.message : "We couldn't place your order. Please try again.");
+      }
+    }
   }
 
   if (!cart.hydrated) {
@@ -288,7 +415,20 @@ export default function CheckoutPage() {
               exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
               transition={{ duration: shouldReduceMotion ? 0.15 : 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              {step === 1 && <FulfillmentStep value={cart.fulfillment} onChange={cart.setFulfillment} />}
+              {step === 1 && (
+                <FulfillmentStep
+                  value={cart.fulfillment}
+                  onChange={cart.setFulfillment}
+                  slots={slots}
+                  hoursLabel={`${scheduleLocation.name}, ${scheduleLocation.hours}`}
+                  scheduledFor={scheduledFor}
+                  onScheduleChange={(iso) => {
+                    setScheduledFor(iso);
+                    setScheduleError(undefined);
+                  }}
+                  scheduleError={scheduleError}
+                />
+              )}
               {step === 2 && (
                 <CustomerStep value={customer} errors={customerErrors} onChange={setCustomer} />
               )}
@@ -318,6 +458,14 @@ export default function CheckoutPage() {
                   items={cart.items}
                   onEditStep={editFromReview}
                   onEditItems={cart.openCart}
+                  scheduledFor={scheduledFor}
+                  tip={tipChoice}
+                  onTipChange={(t) => {
+                    setTipChoice(t);
+                    // A total confirmed after a 409 no longer applies once the tip changes.
+                    setPlacedTotal(null);
+                  }}
+                  subtotalCents={Math.round(cart.totals.subtotal * 100)}
                 />
               )}
             </m.div>
@@ -327,8 +475,14 @@ export default function CheckoutPage() {
             // On phones the sidebar summary sits below this card, i.e. after
             // Place Order — show the totals here instead, right above the button.
             <div className="mt-6 lg:hidden">
-              <OrderSummary items={cart.items} totals={cart.totals} showItems={false} />
+              <OrderSummary items={cart.items} totals={cart.totals} showItems={false} tip={tip} />
             </div>
+          )}
+
+          {step === 5 && placeError && (
+            <p role="alert" className="mt-6 rounded-2xl border border-ember/40 bg-ember/10 px-4 py-3 text-sm text-cream">
+              {placeError}
+            </p>
           )}
 
           <div
@@ -359,14 +513,14 @@ export default function CheckoutPage() {
               </Button>
             ) : (
               <Button variant="primary" size="lg" onClick={placeOrder} disabled={placing} className="w-full sm:w-auto">
-                Place Order · {formatPrice(placedTotal ?? cart.totals.total)}
+                Place Order · {formatPrice(placedTotal ?? cart.totals.total + tip)}
               </Button>
             )}
           </div>
         </div>
 
         <div className={step === 5 ? "hidden lg:order-2 lg:block" : "lg:order-2"}>
-          <OrderSummary items={cart.items} totals={cart.totals} />
+          <OrderSummary items={cart.items} totals={cart.totals} tip={tip} />
         </div>
       </div>
     </div>
