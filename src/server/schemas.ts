@@ -78,3 +78,45 @@ export const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_-]{16,128}$/;
 
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+
+// ---------------------------------------------------------------- accounts
+
+const email = z
+  .string()
+  .trim()
+  .max(254)
+  .pipe(z.email("Enter a valid email address."))
+  .transform((s) => s.toLowerCase());
+// Length/commonness are checked in passwords.ts so the message can be specific.
+const password = z.string().min(1).max(200);
+const name = z.string().trim().max(100).regex(/^[^\u0000-\u001f\u007f<>]*$/, "Invalid characters");
+const phone = z
+  .string()
+  .trim()
+  .max(30)
+  .regex(/^[0-9+().\-\s]*$/, "Use digits, spaces and + ( ) - only");
+
+export const signupSchema = z.strictObject({ email, password, name: name.optional(), phone: phone.optional() });
+export const loginSchema = z.strictObject({ email, password });
+export const profileUpdateSchema = z
+  .strictObject({ name: name.optional(), phone: phone.optional() })
+  .refine((o) => o.name !== undefined || o.phone !== undefined, "Nothing to update");
+const addrText = (max: number) => z.string().trim().max(max).regex(/^[^\u0000-\u001f\u007f<>]*$/, "Invalid characters");
+export const addressSchema = z.strictObject({
+  line1: addrText(200).min(1, "Street address is required"),
+  line2: addrText(100).optional().default(""),
+  city: addrText(60).min(1, "City is required"),
+  zip: z.string().trim().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code"),
+  instructions: addrText(300).optional().default(""),
+});
+export const changePasswordSchema = z.strictObject({ currentPassword: password, newPassword: password });
+export const deleteAccountSchema = z.strictObject({ password });
+export const claimOrdersSchema = z
+  .array(
+    z.strictObject({
+      orderId: z.string().regex(ORDER_ID_RE, "Invalid order id"),
+      trackingToken: z.string().regex(TRACKING_TOKEN_RE, "Invalid tracking token"),
+    })
+  )
+  .min(1)
+  .max(50);

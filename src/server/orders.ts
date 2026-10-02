@@ -97,7 +97,8 @@ export function createOrder(
   input: CreateOrderInput,
   idempotencyKey: string,
   db = getDb(),
-  now = new Date()
+  now = new Date(),
+  userId: string | null = null
 ): CreateOrderResult {
   const requestHash = hashRequest(input);
   const findByKey = db.prepare(
@@ -130,8 +131,8 @@ export function createOrder(
     db.prepare(
       `INSERT INTO orders (id, display_number, created_at, updated_at, fulfillment, location_id, city, zip,
          payment_method, status, subtotal_cents, delivery_fee_cents, discount_cents, tax_cents, total_cents,
-         promo_code, eta_min, eta_max, tracking_token, idempotency_key, request_hash, tip_cents, scheduled_for)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         promo_code, eta_min, eta_max, tracking_token, idempotency_key, request_hash, tip_cents, scheduled_for, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       orderId,
       displayNumber,
@@ -154,7 +155,8 @@ export function createOrder(
       idempotencyKey,
       requestHash,
       priced.tipCents,
-      priced.scheduledFor
+      priced.scheduledFor,
+      userId
     );
 
     const insertItem = db.prepare(
@@ -217,6 +219,7 @@ interface OrderRow {
   tracking_token: string;
   tip_cents: number;
   scheduled_for: string | null;
+  user_id: string | null;
 }
 
 interface ItemRow {
@@ -320,10 +323,21 @@ function loadRow(db: Db, id: string): OrderRow | undefined {
 
 export type GetOrderResult = { kind: "ok"; order: OrderDto } | { kind: "not_found" } | { kind: "forbidden" };
 
-export function getOrderForCustomer(id: string, token: string, db = getDb(), nowMs = Date.now()): GetOrderResult {
+/**
+ * An order is visible with its tracking token, or without one to the signed-in
+ * account that owns it.
+ */
+export function getOrderForCustomer(
+  id: string,
+  token: string,
+  db = getDb(),
+  nowMs = Date.now(),
+  viewerUserId: string | null = null
+): GetOrderResult {
   const row = loadRow(db, id);
   if (!row) return { kind: "not_found" };
-  if (!tokensMatch(row.tracking_token, token)) return { kind: "forbidden" };
+  const owns = viewerUserId !== null && row.user_id === viewerUserId;
+  if (!owns && !tokensMatch(row.tracking_token, token)) return { kind: "forbidden" };
   const status = advanceBySimulation(db, row, nowMs);
   return { kind: "ok", order: toDto(db, row, status) };
 }
@@ -348,4 +362,40 @@ export function adminSetStatus(id: string, to: OrderStatus, db = getDb(), nowMs 
   });
   if (outcome) return outcome;
   return { kind: "ok", order: toDto(db, row, to) };
+}
+
+// ---------------------------------------------------------------- accounts
+
+export type AccountOrderDto = OrderDto & { trackingToken: string };
+
+/** The signed-in user's orders, newest first (retention still applies). */
+export function listOrdersForUser(userId: string, db = getDb(), nowMs = Date.now(), limit = 50): AccountOrderDto[] {
+  const rows = db
+    .prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT ?")
+    .all(userId, limit) as unknown as OrderRow[];
+  return rows.map((row) => ({ ...toDto(db, row, advanceBySimulation(db, row, nowMs)), trackingToken: row.tracking_token }));
+}
+
+/**
+ * Links guest orders to an account. Each order must present its tracking token
+ * (proof the caller placed it) and must not already belong to an account.
+ */
+export function claimOrders(userId: string, refs: { orderId: string; trackingToken: string }[], db = getDb()): number {
+  return runInTransaction(db, () => {
+    let claimed = 0;
+    const update = db.prepare("UPDATE orders SET user_id = ? WHERE id = ? AND user_id IS NULL");
+    for (const ref of refs) {
+      const row = db.prepare("SELECT tracking_token, user_id FROM orders WHERE id = ?").get(ref.orderId) as
+        | { tracking_token: string; user_id: string | null }
+        | undefined;
+      if (!row || row.user_id !== null || !tokensMatch(row.tracking_token, ref.trackingToken)) continue;
+      claimed += Number(update.run(userId, ref.orderId).changes);
+    }
+    return claimed;
+  });
+}
+
+/** Detaches every order from the account (used when it is deleted). */
+export function anonymizeOrders(userId: string, db = getDb()) {
+  db.prepare("UPDATE orders SET user_id = NULL WHERE user_id = ?").run(userId);
 }

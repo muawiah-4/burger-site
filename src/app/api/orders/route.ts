@@ -1,10 +1,13 @@
 import { errorResponse, handle, HttpError, json, rateLimit, readJson } from "@/server/http";
 import { createOrderSchema, IDEMPOTENCY_KEY_RE } from "@/server/schemas";
 import { createOrder } from "@/server/orders";
+import { assertSameOrigin, getSession, readSessionToken } from "@/server/auth";
 
 /**
  * POST /api/orders — re-prices the cart, checks expectedTotalCents, stores the order.
  * Requires an Idempotency-Key header: the same key and body return the same order.
+ * With a valid session cookie the order is linked to that account (and the request
+ * must then pass the same-origin check, since the cookie authenticates it).
  */
 export async function POST(request: Request) {
   return handle(request, async () => {
@@ -13,8 +16,10 @@ export async function POST(request: Request) {
     if (!IDEMPOTENCY_KEY_RE.test(key)) {
       throw new HttpError(400, "invalid_idempotency_key", "Send an Idempotency-Key header (16–128 chars, A-Z a-z 0-9 _ -).");
     }
+    if (readSessionToken(request)) assertSameOrigin(request);
     const input = await readJson(request, createOrderSchema);
-    const result = createOrder(input, key);
+    const session = getSession(request);
+    const result = createOrder(input, key, undefined, undefined, session?.user.id ?? null);
     switch (result.kind) {
       case "created":
         return json(result.response, 201, { Location: `/api/orders/${result.response.orderId}` });

@@ -117,3 +117,42 @@ export interface ApiErrorBody {
   /** Present on 409 total_mismatch: the fresh server quote. */
   quote?: Quote;
 }
+
+// ---------------------------------------------------------------- accounts
+
+export interface AccountUser {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  createdAt: string;
+}
+
+export interface SavedAddress {
+  line1: string;
+  line2: string;
+  city: string;
+  zip: string;
+  instructions: string;
+}
+
+/** GET /api/auth/me — `user` is null when signed out. */
+export interface MeResponse {
+  user: AccountUser | null;
+  address: SavedAddress | null;
+}
+
+/** POST /api/auth/signup and /api/auth/login. */
+export interface AuthResponse {
+  user: AccountUser;
+  address: SavedAddress | null;
+}
+
+/** GET /api/account/orders — the account's orders, newest first. */
+export interface AccountOrdersResponse {
+  orders: (OrderDto & { trackingToken: string })[];
+}
+
+export interface ClaimOrdersResponse {
+  claimed: number;
+}

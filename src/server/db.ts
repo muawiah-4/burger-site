@@ -94,6 +94,49 @@ const MIGRATIONS: string[] = [
   ALTER TABLE orders ADD COLUMN tip_cents INTEGER NOT NULL DEFAULT 0 CHECK (tip_cents >= 0);
   ALTER TABLE orders ADD COLUMN scheduled_for TEXT;
   `,
+  // v3: customer accounts. Passwords are scrypt hashes; sessions store only SHA-256(token).
+  `
+  CREATE TABLE users (
+    id                  TEXT PRIMARY KEY,
+    email               TEXT NOT NULL UNIQUE CHECK (email = lower(email) AND length(email) BETWEEN 3 AND 254),
+    password_hash       TEXT NOT NULL,
+    name                TEXT NOT NULL DEFAULT '',
+    phone               TEXT NOT NULL DEFAULT '',
+    created_at          TEXT NOT NULL,
+    password_changed_at TEXT NOT NULL
+  );
+
+  CREATE TABLE sessions (
+    id                  TEXT PRIMARY KEY,
+    user_id             TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at          TEXT NOT NULL,
+    expires_at          TEXT NOT NULL,
+    last_seen_at        TEXT NOT NULL,
+    user_agent_hash     TEXT NOT NULL
+  );
+  CREATE INDEX idx_sessions_user ON sessions(user_id);
+  CREATE INDEX idx_sessions_expires ON sessions(expires_at);
+
+  CREATE TABLE saved_addresses (
+    user_id             TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    line1               TEXT NOT NULL,
+    line2               TEXT NOT NULL DEFAULT '',
+    city                TEXT NOT NULL,
+    zip                 TEXT NOT NULL,
+    instructions        TEXT NOT NULL DEFAULT '',
+    updated_at          TEXT NOT NULL
+  );
+
+  CREATE TABLE login_attempts (
+    key                 TEXT PRIMARY KEY,
+    failures            INTEGER NOT NULL DEFAULT 0,
+    window_started_at   INTEGER NOT NULL,
+    locked_until        INTEGER NOT NULL DEFAULT 0
+  );
+
+  ALTER TABLE orders ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL;
+  CREATE INDEX idx_orders_user ON orders(user_id, created_at);
+  `,
 ];
 
 /** Seed promotions (idempotent). max_redemptions NULL = unlimited. */
@@ -122,6 +165,9 @@ function migrate(db: DatabaseSync) {
 export function purgeExpiredOrders(db: DatabaseSync, now = Date.now()) {
   const cutoff = new Date(now - ORDER_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
   db.prepare("DELETE FROM orders WHERE created_at < ?").run(cutoff);
+  // Expired sessions and stale sign-in throttling rows go at the same time.
+  db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(new Date(now).toISOString());
+  db.prepare("DELETE FROM login_attempts WHERE locked_until < ? AND window_started_at < ?").run(now, now - 24 * 60 * 60 * 1000);
 }
 
 export function openDatabase(file: string): DatabaseSync {
