@@ -30,8 +30,9 @@ Order status is authoritative on the server. When an order is read, a determinis
 out for delivery / ready at 65%, delivered at 100%), storing an event per step. Status never moves backwards.
 A scheduled order starts one ETA before its slot (never before it was placed). The driver tip (delivery only)
 is computed by the server with the same `computeTip` the checkout displays and is included in the total;
-`scheduledFor` must be one of the slots the checkout offers (`src/lib/schedule.ts`), evaluated in the
-server's local time zone.
+`scheduledFor` must be one of the slots the checkout offers (`src/lib/schedule.ts`). "Today", the opening
+hours and the slots are computed in the location's own time zone (`America/Los_Angeles` for all four
+kitchens), never the server's or the browser's.
 
 ## What is stored, where, and for how long
 
@@ -164,6 +165,7 @@ Design notes:
 
 ## Reporting a vulnerability
 
-Please report security issues privately to the owner of this repository (for example through the hosting
-platform's private vulnerability reporting or a direct message) rather than opening a public issue.
-Include steps to reproduce and the affected URL or file. There is no bug bounty.
+Please report security issues privately through GitHub's private vulnerability reporting:
+https://github.com/muawiah-4/burger-site/security/advisories/new
+
+Don't open a public issue. Include steps to reproduce and the affected URL or file. There is no bug bounty.
