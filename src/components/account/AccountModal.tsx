@@ -17,8 +17,13 @@ import {
   ChefHat,
   Bike,
   Trash2,
+  LogIn,
+  Shield,
+  LogOut,
 } from "lucide-react";
-import { useAccountModal } from "@/context/account-modal-context";
+import { useAccountModal, type AccountTab } from "@/context/account-modal-context";
+import { fetchAccountOrders, logOut } from "@/lib/account-client";
+import { AuthPanel, SecurityPanel, ServerProfileForm } from "@/components/account/AccountForms";
 import { getAllOrders, deriveStatus, orderDisplayNumber, ORDER_RETENTION_DAYS, MAX_STORED_ORDERS } from "@/lib/orders";
 import { clearAllLocalData } from "@/lib/local-data";
 import { OrderStatus, PlacedOrder } from "@/types";
@@ -31,12 +36,15 @@ import { useDialog } from "@/hooks/useDialog";
 import { getSavedUserProfile, saveUserProfile, SavedUserProfile } from "@/lib/user-profile";
 
 export function AccountModal() {
-  const { isOpen, closeAccount, initialTab } = useAccountModal();
+  const { isOpen, closeAccount, initialTab, user, address, authStatus, setAccount } = useAccountModal();
+  const signedIn = user !== null;
   const { applyPromo, openCart, resetCart } = useCartActions();
   const shouldReduceMotion = useReducedMotion();
   const dialogRef = useDialog<HTMLElement>(isOpen, closeAccount);
 
-  const [activeTab, setActiveTab] = useState<"orders" | "profile" | "rewards">(initialTab || "orders");
+  const [activeTab, setActiveTab] = useState<AccountTab | "signin">(initialTab || "orders");
+  const [ordersReload, setOrdersReload] = useState(0);
+  const ordersTabRef = useRef<HTMLButtonElement>(null);
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [serverStatuses, setServerStatuses] = useState<Record<string, OrderStatus>>({});
   const [orderLinks, setOrderLinks] = useState<Record<string, string>>({});
@@ -46,9 +54,10 @@ export function AccountModal() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
+    // Signed out, the default "orders" view opens on the sign-in form instead.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
+    if (initialTab) setActiveTab(authStatus === "signed-out" && initialTab === "orders" ? "signin" : initialTab);
+  }, [initialTab, isOpen, authStatus]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -63,6 +72,24 @@ export function AccountModal() {
     setOrdersError(false);
     setProfile(getSavedUserProfile());
     setProfileSaved(false);
+
+    if (signedIn) {
+      // Signed in: the account's orders come from the server (guest orders were claimed at sign-in).
+      const controller = new AbortController();
+      setOrders([]);
+      fetchAccountOrders(controller.signal).then(
+        ({ orders: list }) => {
+          const placed = list.map(orderDtoToPlacedOrder);
+          setServerStatuses(Object.fromEntries(placed.map((o) => [o.id, o.status])));
+          setOrderLinks(Object.fromEntries(list.map((o) => [o.id, orderHref({ orderId: o.id, trackingToken: o.trackingToken })])));
+          setOrders(placed);
+        },
+        (err) => {
+          if (!controller.signal.aborted && !(err instanceof DOMException)) setOrdersError(true);
+        }
+      );
+      return () => controller.abort();
+    }
 
     // Server orders: this device keeps only ids + tracking tokens; fetch the summaries.
     const refs = getOrderRefs();
@@ -80,7 +107,22 @@ export function AccountModal() {
       }
     );
     return () => controller.abort();
-  }, [isOpen]);
+  }, [isOpen, signedIn, ordersReload]);
+
+  async function handleSignOut() {
+    try {
+      await logOut();
+    } catch {
+      // The cookie may already be gone; either way, forget the session locally.
+    }
+    handleSignedOut();
+  }
+
+  function handleSignedOut() {
+    setAccount(null);
+    setActiveTab("signin");
+    setOrdersReload((n) => n + 1);
+  }
 
   function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
@@ -110,6 +152,9 @@ export function AccountModal() {
     closeAccount();
     openCart();
   }
+
+  // Guard against a tab that doesn't exist in the current signed-in / signed-out state.
+  const tab = signedIn && activeTab === "signin" ? "orders" : !signedIn && activeTab === "security" ? "signin" : activeTab;
 
   return (
     <AnimatePresence>
@@ -145,7 +190,9 @@ export function AccountModal() {
                 </span>
                 <div>
                   <h2 id="account-modal-title" className="font-display text-lg font-extrabold text-cream">Ember Account</h2>
-                  <p className="text-xs text-cream/60">Orders, saved details & rewards</p>
+                  <p className="max-w-[16rem] truncate text-xs text-cream/60" data-testid="account-status">
+                    {signedIn ? `Signed in as ${user.email}` : "Orders, saved details & rewards"}
+                  </p>
                 </div>
               </div>
               <button
@@ -160,48 +207,56 @@ export function AccountModal() {
 
             {/* Navigation Tabs */}
             <div className="flex border-b border-cream/10 bg-charcoal-raised/50 px-5 pt-2 sm:px-6">
-              <button
-                type="button"
-                onClick={() => setActiveTab("orders")}
-                className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
-                  activeTab === "orders"
-                    ? "border-ember text-ember-text"
-                    : "border-transparent text-cream/60 hover:text-cream"
-                }`}
-              >
-                <Package size={15} />
-                Orders {orders.length > 0 && `(${orders.length})`}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("profile")}
-                className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
-                  activeTab === "profile"
-                    ? "border-ember text-ember-text"
-                    : "border-transparent text-cream/60 hover:text-cream"
-                }`}
-              >
-                <User size={15} />
-                Saved Details
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("rewards")}
-                className={`focus-ring flex flex-1 items-center justify-center gap-2 border-b-2 py-3 font-display text-xs font-bold uppercase tracking-wider transition-colors ${
-                  activeTab === "rewards"
-                    ? "border-ember text-ember-text"
-                    : "border-transparent text-cream/60 hover:text-cream"
-                }`}
-              >
-                <Gift size={15} />
-                Rewards
-              </button>
+              {(signedIn
+                ? ([
+                    ["orders", Package, `Orders${orders.length > 0 ? ` (${orders.length})` : ""}`],
+                    ["profile", User, "Profile"],
+                    ["rewards", Gift, "Rewards"],
+                    ["security", Shield, "Security"],
+                  ] as const)
+                : ([
+                    ["signin", LogIn, "Sign In"],
+                    ["orders", Package, `Orders${orders.length > 0 ? ` (${orders.length})` : ""}`],
+                    ["profile", User, "Details"],
+                    ["rewards", Gift, "Rewards"],
+                  ] as const)
+              ).map(([id, Icon, label]) => (
+                <button
+                  key={id}
+                  ref={id === "orders" ? ordersTabRef : undefined}
+                  type="button"
+                  aria-pressed={tab === id}
+                  onClick={() => setActiveTab(id)}
+                  className={`focus-ring flex flex-1 items-center justify-center gap-1.5 border-b-2 py-3 font-display text-[11px] font-bold uppercase tracking-wider transition-colors sm:text-xs ${
+                    tab === id
+                      ? "border-ember text-ember-text"
+                      : "border-transparent text-cream/60 hover:text-cream"
+                  }`}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                  {label}
+                </button>
+              ))}
             </div>
 
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+              {tab === "signin" && !signedIn && (
+                <AuthPanel
+                  onSignedIn={(u, a) => {
+                    setAccount(u, a);
+                    setActiveTab("orders");
+                    setOrdersReload((n) => n + 1);
+                    // The form unmounts; keep keyboard focus inside the dialog.
+                    requestAnimationFrame(() => ordersTabRef.current?.focus());
+                  }}
+                />
+              )}
+
+              {tab === "security" && signedIn && <SecurityPanel onSignedOut={handleSignedOut} />}
+
               {/* Tab 1: Orders */}
-              {activeTab === "orders" && (
+              {tab === "orders" && (
                 <div>
                   {orders.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -210,7 +265,9 @@ export function AccountModal() {
                       </div>
                       <h3 className="mt-4 font-display text-base font-bold text-cream">No orders yet</h3>
                       <p className="mt-1 max-w-xs text-xs text-cream/60">
-                        When you place an order, live tracking details will appear here automatically.
+                        {ordersError
+                          ? "Your orders couldn't be loaded right now. Try again in a moment."
+                          : "When you place an order, live tracking details will appear here automatically."}
                       </p>
                       <ButtonLink href="/menu" onClick={closeAccount} size="sm" variant="primary" className="mt-5">
                         Explore Menu
@@ -219,7 +276,9 @@ export function AccountModal() {
                   ) : (
                     <div className="flex flex-col gap-4">
                       <p className="text-[11px] text-cream/60">
-                        Your last {MAX_STORED_ORDERS} orders are kept on this device for {ORDER_RETENTION_DAYS} days.
+                        {signedIn
+                          ? `Orders on your account from the last ${ORDER_RETENTION_DAYS} days.`
+                          : `Your last ${MAX_STORED_ORDERS} orders are kept on this device for ${ORDER_RETENTION_DAYS} days. Sign in to keep them with your account.`}
                       </p>
                       {ordersError && (
                         <p role="alert" className="text-[11px] text-ember-text">
@@ -307,7 +366,14 @@ export function AccountModal() {
               )}
 
               {/* Tab 2: Profile */}
-              {activeTab === "profile" && (
+              {tab === "profile" && signedIn && (
+                <div className="flex flex-col gap-6">
+                  <ServerProfileForm user={user} address={address} onSaved={(u, a) => setAccount(u, a)} />
+                  <ClearDataSection onClear={handleClearData} onSignOut={handleSignOut} />
+                </div>
+              )}
+
+              {tab === "profile" && !signedIn && (
                 <div className="flex flex-col gap-6">
                 <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
                   <div className="rounded-2xl bg-charcoal-raised p-4 border border-cream/10">
@@ -418,10 +484,10 @@ export function AccountModal() {
               )}
 
               {/* Tab 3: Rewards */}
-              {activeTab === "rewards" && (
+              {tab === "rewards" && (
                 <div className="flex flex-col gap-4">
                   {/* Tier Card */}
-                  <RewardsCard orders={orders} />
+                  <RewardsCard orders={orders} fromAccount={signedIn} />
 
                   {/* Promo Rewards */}
                   <div className="flex flex-col gap-3">
@@ -498,7 +564,7 @@ export function AccountModal() {
  * "Clear my data": removes the cart, order history and saved details from this
  * browser. The confirmation is inline (no window.confirm) and keeps focus sensible.
  */
-function ClearDataSection({ onClear }: { onClear: () => boolean }) {
+function ClearDataSection({ onClear, onSignOut }: { onClear: () => boolean; onSignOut?: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<"cleared" | "failed" | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -522,7 +588,8 @@ function ClearDataSection({ onClear }: { onClear: () => boolean }) {
         Your data on this device
       </h3>
       <p className="mt-2 text-xs text-cream/70">
-        Ember has no servers. Your cart, order history and saved details are kept only in this browser.
+        Your cart, guest order links and saved details are kept in this browser. Clearing them doesn&apos;t touch your
+        account{onSignOut ? "; sign out as well to end this browser's session" : ""}.
       </p>
 
       {confirming ? (
@@ -574,6 +641,13 @@ function ClearDataSection({ onClear }: { onClear: () => boolean }) {
           </Button>
         </div>
       )}
+      {onSignOut && !confirming && (
+        <div className="mt-2 flex justify-end">
+          <Button type="button" size="sm" variant="ghost" icon={<LogOut size={14} />} onClick={onSignOut}>
+            Sign out
+          </Button>
+        </div>
+      )}
       <p role="status" className="mt-2 text-xs font-semibold empty:hidden">
         {result === "cleared" && <span className="text-emerald-400">All Ember data removed from this browser.</span>}
         {result === "failed" && <span className="text-ember-text">Couldn&apos;t access browser storage.</span>}
@@ -582,7 +656,7 @@ function ClearDataSection({ onClear }: { onClear: () => boolean }) {
   );
 }
 
-function RewardsCard({ orders }: { orders: PlacedOrder[] }) {
+function RewardsCard({ orders, fromAccount }: { orders: PlacedOrder[]; fromAccount: boolean }) {
   const rewards = summarizeRewards(orders);
   const pct = Math.round(rewards.progress * 100);
   return (
@@ -625,7 +699,7 @@ function RewardsCard({ orders }: { orders: PlacedOrder[] }) {
           <span>{rewards.nextTier ? `${rewards.nextTier.min.toLocaleString("en-US")} pts` : "Inferno"}</span>
         </div>
         <p className="mt-2 text-[11px] text-cream/60">
-          10 pts per $1 of subtotal, from the orders saved on this device.
+          10 pts per $1 of subtotal, from {fromAccount ? "your account's orders" : "the orders saved on this device"}.
         </p>
       </div>
     </div>

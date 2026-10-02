@@ -90,7 +90,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, init: RequestInit): Promise<T> {
+export async function request<T>(url: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, { ...init, cache: "no-store" });

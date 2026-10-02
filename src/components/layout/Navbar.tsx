@@ -25,7 +25,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount } = useCartState();
   const { openCart } = useCartActions();
-  const { openAccount } = useAccountModal();
+  const { openAccount, user } = useAccountModal();
+  const accountLabel = user ? `Account, signed in as ${user.name || user.email}` : "Account, signed out";
   const { registerCartIcon, registerMobileCartIcon } = useFlyToCartActions();
   const landSignal = useLandSignal();
   const pathname = usePathname();
@@ -105,11 +106,26 @@ export function Navbar() {
           </Link>
           <button
             type="button"
-            aria-label="Account"
+            aria-label={accountLabel}
+            title={user ? `Signed in as ${user.email}` : "Sign in or create an account"}
             onClick={openAccount}
-            className={cn("focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 hover:text-ember-text", textTone)}
+            data-testid="navbar-account"
+            data-signed-in={user ? "true" : "false"}
+            className={cn("focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90 hover:text-ember-text", textTone)}
           >
-            <User size={19} />
+            {user ? (
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-ember-fill font-display text-xs font-extrabold uppercase text-cream"
+              >
+                {(user.name || user.email).trim().charAt(0)}
+              </span>
+            ) : (
+              <User size={19} />
+            )}
+            {user && (
+              <span aria-hidden="true" className="absolute right-1 bottom-1 h-2.5 w-2.5 rounded-full border-2 border-charcoal bg-emerald-400" />
+            )}
           </button>
           <button
             ref={registerCartIcon}
@@ -227,7 +243,7 @@ export function Navbar() {
                     openAccount();
                   }}
                 >
-                  <User size={16} /> Account
+                  <User size={16} /> {user ? "My Account" : "Sign In"}
                 </Button>
               </div>
             </m.div>

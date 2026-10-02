@@ -18,6 +18,7 @@ import {
 } from "@/lib/order-client";
 import { formatPrice } from "@/lib/utils";
 import { getSavedUserProfile } from "@/lib/user-profile";
+import { useAccountModal } from "@/context/account-modal-context";
 import {
   isValidCardNumber,
   isValidCvc,
@@ -72,6 +73,7 @@ function firstInvalidId<K extends string>(errors: Partial<Record<K, string>>, id
 export default function CheckoutPage() {
   const router = useRouter();
   const cart = useCart();
+  const { user: accountUser, address: accountAddress } = useAccountModal();
   const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
@@ -144,6 +146,32 @@ export default function CheckoutPage() {
     }));
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  useEffect(() => {
+    // Signed in: fill any still-blank fields from the account (after the draft is
+    // restored, so it runs again then). Guest checkout skips this entirely.
+    if (!accountUser || !draftRestored) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setCustomer((c) => ({
+      name: c.name || accountUser.name,
+      phone: c.phone || accountUser.phone,
+      email: c.email || accountUser.email,
+    }));
+    if (accountAddress) {
+      setAddress((a) =>
+        a.line1 || a.city || a.zip
+          ? a
+          : {
+              line1: accountAddress.line1,
+              line2: accountAddress.line2,
+              city: accountAddress.city,
+              zip: accountAddress.zip,
+              instructions: a.instructions || accountAddress.instructions,
+            }
+      );
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [accountUser, accountAddress, draftRestored]);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), 60_000);

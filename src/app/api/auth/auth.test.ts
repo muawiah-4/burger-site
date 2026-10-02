@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetDbForTests, getDb } from "@/server/db";
 import { EMAIL_FREE_FAILURES } from "@/server/auth";
 import { POST as signupPOST } from "./signup/route";
@@ -68,6 +68,9 @@ async function placeOrder(cookie?: string) {
   const { orderId, trackingToken } = (await res.json()) as { orderId: string; trackingToken: string };
   return { orderId, trackingToken };
 }
+
+// Each scrypt hash costs ~50-100 ms; leave headroom when the machine is busy.
+vi.setConfig({ testTimeout: 30_000 });
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 

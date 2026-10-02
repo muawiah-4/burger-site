@@ -1,8 +1,9 @@
 # Security
 
 Ember is a demo food-ordering site: a Next.js 16 App Router front end plus a small order API (route handlers
-under `src/app/api`, logic in `src/server`) backed by a local SQLite file. There is **no payment processor,
-no accounts and no kitchen integration**. The server prices orders, stores them and simulates their progress.
+under `src/app/api`, logic in `src/server`) backed by a local SQLite file. There is **no payment processor
+and no kitchen integration**. The server prices orders, stores them and simulates their progress. Customers
+can optionally create an email + password account (below); guest checkout works without one.
 
 ## Server-side pricing and orders
 
@@ -17,7 +18,7 @@ bundle no longer contains them (the codes still appear in marketing copy, which 
 | --- | --- | --- |
 | `POST /api/quote` | Price a cart, check a promo code | Read-only. 120 requests/min per client. |
 | `POST /api/orders` | Place an order | Requires an `Idempotency-Key` header (16–128 chars). The server re-prices and refuses with **409** plus a fresh quote if `expectedTotalCents` differs from its total. The same key and body return the same order; the same key with a different body returns 422. The idempotency check, promo redemption limit and inserts run in one `BEGIN IMMEDIATE` transaction. 20/min per client. |
-| `GET /api/orders/:id?t=<token>` | Track an order | Needs the order's tracking token (32 random bytes, base64url), compared in constant time. 403 without it. |
+| `GET /api/orders/:id?t=<token>` | Track an order | Needs the order's tracking token (32 random bytes, base64url), compared in constant time, **or** a session for the account that owns the order. 403 otherwise (including for a different signed-in account). |
 | `PATCH /api/orders/:id/status` | Demo kitchen control | Needs `X-Admin-Token` equal to `ADMIN_TOKEN` (constant-time compare). Disabled (503) when `ADMIN_TOKEN` is unset or shorter than 16 characters. Only moves an order to its next stage. |
 
 All inputs are validated with zod (unknown keys rejected; ids, quantities 1–20, 30 lines and 100 items per
@@ -34,6 +35,55 @@ is computed by the server with the same `computeTip` the checkout displays and i
 hours and the slots are computed in the location's own time zone (`America/Los_Angeles` for all four
 kitchens), never the server's or the browser's.
 
+## Accounts
+
+Email + password accounts, implemented with Node built-ins only (no external identity provider, no email
+service). Code: `src/server/auth.ts` (sessions, cookie, CSRF, throttling), `src/server/passwords.ts`,
+`src/server/account.ts`, routes under `src/app/api/auth` and `src/app/api/account`.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/auth/signup` | `{ email, password, name?, phone? }` → 201 `{ user, address }` and a session cookie |
+| `POST /api/auth/login` | `{ email, password }` → 200 `{ user, address }` and a fresh session cookie |
+| `POST /api/auth/logout` | Ends this session; `{ "everywhere": true }` ends every session of the account |
+| `GET /api/auth/me` | `{ user, address }` (both `null` when signed out); slides the session expiry |
+| `PATCH /api/account` | `{ name?, phone? }` → `{ user }` |
+| `PUT` / `DELETE /api/account/address` | Save (replace) or forget the default delivery address |
+| `POST /api/account/password` | `{ currentPassword, newPassword }`; ends all other sessions and issues a new one |
+| `DELETE /api/account` | `{ password }`; deletes the account (see retention below) |
+| `GET /api/account/orders` | `{ orders }`: the account's orders, newest first, each with its tracking token |
+| `POST /api/account/claim-orders` | `[{ orderId, trackingToken }, …]` (max 50) → `{ claimed }` |
+
+- **Passwords** are hashed with **scrypt** (`N = 2^15`, `r = 8`, `p = 1`, 32-byte key, random 16-byte salt per
+  hash), stored as `scrypt$N$r$p$salt$hash` so the cost can be raised later (old hashes are re-hashed at the
+  next sign-in), and compared with `timingSafeEqual`. Passwords must be 10–200 characters, may not equal the
+  email, and are checked against an embedded list of common passwords.
+- **Sessions.** A random 32-byte token in the `ember_session` cookie: `HttpOnly`, `SameSite=Lax`, `Path=/`,
+  `Secure` in production, `Max-Age` 30 days. The database stores only `SHA-256(token)` as the session id,
+  plus the user id, created / last-seen / expiry times and a SHA-256 of the User-Agent. Expiry slides: the
+  first request after an hour pushes it out to 30 days again (`GET /api/auth/me` re-sends the cookie). The
+  session is rotated on sign-in and sign-up (any pre-existing session cookie is deleted), deleted on sign-out,
+  and all of an account's sessions are deleted by "Log out everywhere", a password change (except the new
+  one) and account deletion.
+- **CSRF.** `SameSite=Lax` plus an `Origin` check on every state-changing account route (`POST`, `PATCH`,
+  `PUT`, `DELETE`): the `Origin` host must equal the request's `Host` (or `X-Forwarded-Host`), or be listed
+  in `TRUSTED_ORIGINS`; a request without `Origin` is refused unless `Sec-Fetch-Site: same-origin`.
+  `POST /api/orders` applies the same check whenever a session cookie is present, because the cookie then
+  links the order to the account.
+- **Brute force.** Every failed sign-in (or wrong current password on the password / delete routes) is
+  recorded in `login_attempts`, keyed by the client IP and by `SHA-256(lowercased email)`. After **5**
+  failures for an email it is locked for 30 s, doubling per further failure up to 15 minutes (the counter
+  resets 24 h after the first failure or on success); an IP is locked for 15 minutes after **30** failures in
+  15 minutes. Locked requests get **429** with `Retry-After`. The in-memory per-IP request limits apply too.
+- **No account enumeration at sign-in.** An unknown email and a wrong password return the same 401 body,
+  and an unknown email is still checked against a dummy scrypt hash so both take the same time. Lockout
+  works the same for emails with and without an account. Sign-up necessarily reports an email that's
+  already registered (there is no email verification step to hide it behind); it's rate-limited to 10 per
+  15 minutes per IP.
+- **Order linking.** Orders placed while signed in get `orders.user_id`. At sign-in / sign-up the browser
+  sends the `{orderId, trackingToken}` pairs it holds in `ember.orders.v2`; the server links each order only
+  if the token matches (constant time) and the order isn't already linked to an account.
+
 ## What is stored, where, and for how long
 
 ### On the server (`./data/ember.db`, SQLite)
@@ -44,16 +94,28 @@ kitchens), never the server's or the browser's.
 | `order_items` | Product or deal id, name, quantity, unit price, chosen options |
 | `order_events` | Status changes with timestamps and their source (order, kitchen-sim, admin) |
 | `promotions` / `promotion_redemptions` | Promo rules; which order redeemed which code and for how much |
+| `users` | Account id, **email** (lowercased), scrypt password hash, optional name and phone, created and password-changed times |
+| `sessions` | SHA-256 of the session token, user id, created / last-seen / expiry times, SHA-256 of the User-Agent |
+| `saved_addresses` | Only for signed-in users who save one in Account → Profile: street, apt, city, ZIP, delivery instructions |
+| `login_attempts` | Failed sign-in counters and lock times per client IP and per SHA-256 of the email |
 
-No name, phone, email, street address, delivery instructions or card data is sent to or stored by the
-server. Orders older than **30 days** are deleted (with their items, events and redemptions) when the
-server starts and periodically as new orders arrive. The database file is git-ignored. Tracking tokens are
+`orders.user_id` links an order to the account that placed or claimed it (null for guest orders).
+
+For guests, no name, phone, email, street address, delivery instructions or card data is sent to or stored
+by the server. For account holders, the server stores only what's listed above: the email and password hash,
+and the name, phone and address they choose to save. Checkout contact details still aren't sent with the
+order (they pre-fill from the account instead). Orders older than **30 days** are deleted (with their items, events and redemptions) when the
+server starts and periodically as new orders arrive. Expired sessions and stale sign-in counters are removed
+at the same time. Accounts, their name/phone and saved address are kept until the user deletes the account
+(Account → Security → Delete account, which needs the password): that deletes the user row, every session
+and the saved address, and sets `user_id` to null on their orders, which then remain only as anonymous
+orders until the 30-day order retention removes them. The database file is git-ignored. Tracking tokens are
 stored as-is so an idempotent retry can return the same token; treat the database file as sensitive.
 
 ### In the browser (`localStorage`, `sessionStorage`)
 
 Everything is in `localStorage`, apart from the in-progress checkout draft, which is in `sessionStorage`.
-There are no cookies.
+The only cookie is the `ember_session` cookie described under Accounts, set only when you sign in.
 
 | Key | Contents | Retention |
 | --- | --- | --- |
@@ -72,8 +134,10 @@ What is **never** stored or sent:
   review step only; the order request carries just the city and ZIP.
 - Newsletter emails. The form validates the address in the browser and discards it.
 
-**Clear my data** (Account → Saved Details) removes all the keys above after an inline confirmation. It
-doesn't delete orders on the server (they expire after 30 days); without the token they can't be read.
+**Clear my data** (Account → Saved Details, or Profile when signed in) removes all the keys above after an
+inline confirmation. It doesn't delete orders on the server (they expire after 30 days); without the token
+they can't be read. It doesn't touch your account or sign you out; signed-in users get a separate "Sign out"
+button there (and "Delete account" under Security).
 
 The tracking token is in the order page URL (`/order/<id>?t=<token>`). Anyone with that link can see the
 order's items, totals, status and city/ZIP. `Referrer-Policy: strict-origin-when-cross-origin` keeps it out
@@ -149,8 +213,11 @@ Design notes:
   so: a persistent "Demo: no payment is taken and no food is prepared" notice on checkout and order pages,
   plus a "Don't enter a real card" hint with the test number `4242 4242 4242 4242`. Card data is never
   stored or transmitted, but please don't type a real card into a demo.
-- **No accounts.** Orders are reachable by anyone holding their tracking link. There is no login and no way
-  to list orders except from the tokens kept on this device.
+- **Accounts have no email verification or password reset.** There's no email service, so anyone can sign
+  up with any address, and a forgotten password can't be recovered. Orders are still reachable by anyone
+  holding their tracking link. No MFA.
+- **Sign-in throttling is per IP and per email**, stored in SQLite. A distributed attacker spread over many
+  IPs is slowed only by the per-email backoff.
 - **Order status is simulated** by the server's kitchen schedule (and the optional admin endpoint). Nothing
   is cooked or delivered.
 - **Rate limits are in memory and per process**, keyed by the first `X-Forwarded-For` address. That's only
