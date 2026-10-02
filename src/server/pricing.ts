@@ -1,5 +1,5 @@
 import "server-only";
-import type { FulfillmentMethod, OptionGroup, Product } from "@/types";
+import type { FulfillmentMethod, Location, OptionGroup, Product } from "@/types";
 import type { PricedLine, PricedOption, PromoOutcome, Quote, QuoteRequest } from "@/lib/api-types";
 import { productMap, getProductsByCategory } from "@/lib/data/products";
 import { COMBO_SOFT_DRINK_IDS, deals } from "@/lib/data/deals";
@@ -279,16 +279,16 @@ export function computeDeliveryFeeCents(fulfillment: FulfillmentMethod, subtotal
 /**
  * Validates an order-for-later time with the same rules the checkout uses
  * (src/lib/schedule.ts): one of today's 15-minute slots, at least 30 minutes
- * ahead, within the location's hours. Delivery uses the first location's hours,
- * as the checkout does. Returns the normalised ISO time, or null for ASAP.
+ * ahead, within the location's hours, in the location's time zone. Delivery uses
+ * the first location's hours, as the checkout does. Returns the normalised ISO time, or null for ASAP.
  */
 export function validateSchedule(
   scheduledFor: string | null | undefined,
-  locationHours: string,
+  location: Pick<Location, "hours" | "timeZone">,
   now: Date
 ): string | null {
   if (!scheduledFor) return null;
-  if (!isAvailableSlot(scheduledFor, now, locationHours)) {
+  if (!isAvailableSlot(scheduledFor, now, location.hours, location.timeZone)) {
     throw new PricingError(
       "invalid_schedule",
       "That time is no longer available. Pick another slot or choose ASAP.",
@@ -357,7 +357,7 @@ export function priceOrder(input: QuoteRequest, findPromo: PromoLookup, now = ne
   const taxCents = computeTaxCents(taxable);
   // Same computeTip as the checkout display, on the pre-discount subtotal. Delivery only; not taxed.
   const tipCents = input.fulfillment === "delivery" ? computeTip(subtotalCents, input.tip ?? NO_TIP) : 0;
-  const scheduledFor = validateSchedule(input.scheduledFor, (location ?? locations[0]).hours, now);
+  const scheduledFor = validateSchedule(input.scheduledFor, location ?? locations[0], now);
 
   return {
     fulfillment: input.fulfillment,

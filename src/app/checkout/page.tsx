@@ -152,7 +152,10 @@ export default function CheckoutPage() {
 
   const scheduleLocation =
     (cart.fulfillment === "pickup" && locations.find((l) => l.id === cart.pickupLocationId)) || locations[0];
-  const slots = useMemo(() => generateTimeSlots(now, scheduleLocation.hours), [now, scheduleLocation.hours]);
+  const slots = useMemo(
+    () => generateTimeSlots(now, scheduleLocation.hours, scheduleLocation.timeZone),
+    [now, scheduleLocation.hours, scheduleLocation.timeZone]
+  );
   const tipCents =
     cart.fulfillment === "delivery" ? computeTip(Math.round(cart.totals.subtotal * 100), tipChoice) : 0;
   const tip = tipCents / 100;
@@ -421,6 +424,7 @@ export default function CheckoutPage() {
                   onChange={cart.setFulfillment}
                   slots={slots}
                   hoursLabel={`${scheduleLocation.name}, ${scheduleLocation.hours}`}
+                  timeZone={scheduleLocation.timeZone}
                   scheduledFor={scheduledFor}
                   onScheduleChange={(iso) => {
                     setScheduledFor(iso);
@@ -459,6 +463,7 @@ export default function CheckoutPage() {
                   onEditStep={editFromReview}
                   onEditItems={cart.openCart}
                   scheduledFor={scheduledFor}
+                  timeZone={scheduleLocation.timeZone}
                   tip={tipChoice}
                   onTipChange={(t) => {
                     setTipChoice(t);

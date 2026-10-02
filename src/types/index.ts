@@ -95,6 +95,8 @@ export interface Location {
   name: string;
   address: string;
   hours: string;
+  /** IANA time zone the hours are in, e.g. "America/Los_Angeles". */
+  timeZone: string;
   distanceMiles: number;
   deliveryAvailable: boolean;
   pickupEta: string;

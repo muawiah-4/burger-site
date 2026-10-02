@@ -10,6 +10,7 @@ export function FulfillmentStep({
   onChange,
   slots,
   hoursLabel,
+  timeZone,
   scheduledFor,
   onScheduleChange,
   scheduleError,
@@ -20,6 +21,8 @@ export function FulfillmentStep({
   slots: Date[];
   /** e.g. "Ember Downtown, 10:00 AM – 12:00 AM" */
   hoursLabel: string;
+  /** The location's IANA time zone; slots are shown in it. */
+  timeZone: string;
   scheduledFor: string | null;
   onScheduleChange: (iso: string | null) => void;
   scheduleError?: string;
@@ -104,11 +107,11 @@ export function FulfillmentStep({
             >
               {/* A restored time that is no longer offered stays selectable until changed. */}
               {!slots.some((s) => s.toISOString() === scheduledFor) && (
-                <option value={scheduledFor}>{formatSlot(new Date(scheduledFor))} (unavailable)</option>
+                <option value={scheduledFor}>{formatSlot(new Date(scheduledFor), timeZone)} (unavailable)</option>
               )}
               {slots.map((slot) => (
                 <option key={slot.toISOString()} value={slot.toISOString()}>
-                  {formatSlot(slot)}
+                  {formatSlot(slot, timeZone)}
                 </option>
               ))}
             </select>

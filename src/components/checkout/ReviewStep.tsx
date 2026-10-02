@@ -25,6 +25,7 @@ export function ReviewStep({
   onEditStep,
   onEditItems,
   scheduledFor,
+  timeZone,
   tip,
   onTipChange,
   subtotalCents,
@@ -38,6 +39,8 @@ export function ReviewStep({
   onEditStep: (step: number) => void;
   onEditItems: () => void;
   scheduledFor: string | null;
+  /** Time zone of the location the order is scheduled at. */
+  timeZone: string;
   tip: TipChoice;
   onTipChange: (tip: TipChoice) => void;
   subtotalCents: number;
@@ -74,7 +77,7 @@ export function ReviewStep({
         <ReviewRow title="Fulfillment" onEdit={() => onEditStep(1)}>
           <p className="text-sm capitalize text-cream/70">{fulfillment}</p>
           <p className="text-sm text-cream/60" data-testid="review-when">
-            {scheduledFor ? `Scheduled for ${formatSlot(new Date(scheduledFor))} today` : "ASAP"}
+            {scheduledFor ? `Scheduled for ${formatSlot(new Date(scheduledFor), timeZone)} today` : "ASAP"}
           </p>
         </ReviewRow>
 

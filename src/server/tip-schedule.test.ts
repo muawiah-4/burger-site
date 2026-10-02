@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { priceOrder, PricingError } from "./pricing";
 
-const NOON = new Date(2026, 9, 1, 12, 0); // local time; locations[0] is open 10 AM – 12 AM
-const at = (h: number, m: number) => new Date(2026, 9, 1, h, m).toISOString();
+// San Francisco wall-clock times (PDT, UTC-7); locations[0] is open 10 AM – 12 AM there.
+const laTime = (h: number, m: number) =>
+  new Date(`2026-10-01T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00-07:00`);
+const NOON = laTime(12, 0);
+const at = (h: number, m: number) => laTime(h, m).toISOString();
 const delivery = { fulfillment: "delivery" as const, items: [{ dealId: "deal-2for1", qty: 2 }] };
 
 function expectInvalidSchedule(scheduledFor: string) {

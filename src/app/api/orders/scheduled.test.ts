@@ -17,6 +17,10 @@ function post(url: string, body: unknown, headers: Record<string, string> = {}) 
   });
 }
 
+// San Francisco wall-clock time on 1 Oct 2026 (PDT, UTC-7).
+const laTime = (h: number, m: number) =>
+  new Date(`2026-10-01T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00-07:00`);
+
 beforeEach(() => {
   resetDbForTests(":memory:");
 });
@@ -26,8 +30,8 @@ afterEach(() => {
 
 describe("tip and scheduled orders through the API", () => {
   it("charges the tip, stores the slot and holds the kitchen until its start time", async () => {
-    vi.useFakeTimers({ now: new Date(2026, 9, 1, 12, 0), toFake: ["Date"] });
-    const slot = new Date(2026, 9, 1, 14, 0).toISOString();
+    vi.useFakeTimers({ now: laTime(12, 0), toFake: ["Date"] });
+    const slot = laTime(14, 0).toISOString();
     const extra = { tip: { kind: "percent", percent: 20 }, scheduledFor: slot };
 
     const q = await (await quotePOST(post("/api/quote", { fulfillment: "delivery", items: ITEMS, ...extra }))).json();
@@ -58,9 +62,9 @@ describe("tip and scheduled orders through the API", () => {
       ).json();
 
     // Kitchen starts one ETA (35 min) before the 14:00 slot, at 13:25.
-    vi.setSystemTime(new Date(2026, 9, 1, 13, 20));
+    vi.setSystemTime(laTime(13, 20));
     expect(await get()).toMatchObject({ status: "preparing", tipCents: 579, scheduledFor: slot, totalCents: q.totalCents });
-    vi.setSystemTime(new Date(2026, 9, 1, 13, 40));
+    vi.setSystemTime(laTime(13, 40));
     expect((await get()).status).toBe("cooking");
   });
 

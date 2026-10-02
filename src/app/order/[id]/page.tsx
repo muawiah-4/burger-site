@@ -113,7 +113,7 @@ export default function OrderPage() {
         <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember-text">
           <Clock size={14} />{" "}
           {order.scheduledFor
-            ? `Scheduled for ${formatSlot(new Date(order.scheduledFor))}`
+            ? `Scheduled for ${formatSlot(new Date(order.scheduledFor), (pickupLocation ?? locations[0]).timeZone)}`
             : `Estimated ${order.estimatedMinutes[0]}–${order.estimatedMinutes[1]} min`}
         </p>
         <DemoNotice className="mx-auto mt-5 max-w-md" />
