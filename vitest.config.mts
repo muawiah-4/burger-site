@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    exclude: ["**/node_modules/**", "**/e2e/**", "**/.next/**"],
     env: { RATE_LIMIT_DISABLED: "1", EMBER_DB_PATH: ":memory:" },
   },
 });
