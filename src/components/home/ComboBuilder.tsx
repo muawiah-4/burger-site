@@ -12,6 +12,7 @@ export function ComboBuilder({ combos }: { combos: ComboConfig[] }) {
   const current = combos.find((c) => c.key === active) ?? combos[0];
 
   const switcher = (
+    <div className="flex">
     <div role="group" aria-label="Combo type" className="inline-flex gap-1 rounded-full bg-charcoal p-1">
       {combos.map((c) => {
         const selected = c.key === active;
@@ -30,6 +31,7 @@ export function ComboBuilder({ combos }: { combos: ComboConfig[] }) {
           </button>
         );
       })}
+    </div>
     </div>
   );
 

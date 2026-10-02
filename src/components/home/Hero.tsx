@@ -70,8 +70,8 @@ export function Hero() {
             transition={fadeUpTransition(2)}
             className="mt-6 max-w-md text-base leading-relaxed text-cream/70 sm:text-lg"
           >
-            Burgers, pizza, crispy chicken, loaded sides and everything your cravings have been
-            asking for.
+            Smash burgers, 48-hour dough pizza and buttermilk fried chicken, cooked the minute you
+            order. Delivery or pickup from four kitchens across the city.
           </Reveal>
           <Reveal
             initial={slideUpInitial}

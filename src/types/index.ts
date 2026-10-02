@@ -103,6 +103,8 @@ export interface Review {
   text: string;
   initials: string;
   item?: string;
+  /** Month and year shown under the review, e.g. "Aug 2026". */
+  date: string;
 }
 
 export type FulfillmentMethod = "delivery" | "pickup";

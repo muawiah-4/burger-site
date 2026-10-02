@@ -104,7 +104,7 @@ export function MenuView() {
       <div className="text-center">
         <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ember-text">Order Now</p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-cream sm:text-5xl">
-          THE MENU
+          The Ember Menu
         </h1>
       </div>
 

@@ -30,8 +30,11 @@ export function Reviews() {
                 </div>
               </div>
             </div>
-            <p className="text-sm leading-relaxed text-cream/70">&ldquo;{review.text}&rdquo;</p>
-            {review.item && <p className="text-xs font-semibold text-cream/60">Ordered: {review.item}</p>}
+            <p className="text-sm leading-relaxed text-cream/80">&ldquo;{review.text}&rdquo;</p>
+            <p className="mt-auto text-xs font-semibold text-cream/60">
+              {review.item ? <>Ordered: {review.item} · </> : null}
+              {review.date}
+            </p>
           </div>
         ))}
       </div>

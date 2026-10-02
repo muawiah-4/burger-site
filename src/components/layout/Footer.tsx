@@ -54,7 +54,8 @@ export function Footer() {
               <span className="font-display text-lg font-extrabold">EMBER</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-cream/60">
-              Big flavor. Zero boring bites. Made fresh when you order, delivered fast.
+              Smash burgers, stone-baked pizza and crispy chicken, cooked to order in San Francisco
+              since 2019.
             </p>
             {/* Decorative: the brand is fictional and has no social accounts to link to. */}
             <div className="mt-6 flex items-center gap-4" aria-hidden="true">
@@ -98,9 +99,12 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-cream/10 pt-6 text-xs text-cream/60 sm:flex-row">
+        <div className="mt-14 border-t border-cream/10 pt-6 text-xs text-cream/60">
           <p>© {new Date().getFullYear()} Ember Foods Co. All rights reserved.</p>
-          <p>An entirely original, fictional brand.</p>
+          <p className="mt-2 max-w-2xl text-[11px] leading-relaxed">
+            Ember is a fictional restaurant brand built as a demo. Its people, ranch, locations
+            and reviews are invented, and no real orders, payments or emails are processed.
+          </p>
         </div>
       </div>
     </footer>

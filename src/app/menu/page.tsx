@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { MenuView } from "./MenuView";
 
 export const metadata: Metadata = {
-  title: "The Menu — Ember",
-  description: "Browse burgers, pizza, chicken, wraps, sides, desserts and drinks.",
+  title: "The Ember Menu",
+  description: "Smash burgers, stone-baked pizza, fried chicken, wraps, sides, desserts and shakes from Ember in San Francisco. Order for delivery or pickup.",
 };
 
 export default function MenuPage() {

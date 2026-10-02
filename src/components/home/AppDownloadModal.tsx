@@ -33,7 +33,7 @@ export function AppDownloadModal({
   function handleSend(e: FormEvent) {
     e.preventDefault();
     if (!phone.trim() || phone.replace(/\D/g, "").length < 10) {
-      setError("Please enter a valid 10-digit phone number.");
+      setError("We need a 10-digit number to text the link to.");
       return;
     }
     setError("");

@@ -132,30 +132,30 @@ export default function CheckoutPage() {
 
   function customerErrorsFor(): Partial<Record<keyof CustomerInfo, string>> {
     const errors: Partial<Record<keyof CustomerInfo, string>> = {};
-    if (!isValidName(customer.name)) errors.name = "Enter your full name.";
-    if (!isValidPhone(customer.phone)) errors.phone = "Enter a valid phone number.";
-    if (!isValidEmail(customer.email)) errors.email = "Enter a valid email address.";
+    if (!isValidName(customer.name)) errors.name = "We need your name to fire your order.";
+    if (!isValidPhone(customer.phone)) errors.phone = "Add a phone number we can reach you on (at least 7 digits).";
+    if (!isValidEmail(customer.email)) errors.email = "That email doesn't look right. Try again?";
     return errors;
   }
 
   function addressErrorsFor(): Partial<Record<keyof DeliveryAddress, string>> {
     if (cart.fulfillment === "pickup") {
-      return cart.pickupLocationId ? {} : { line1: "Choose a pickup location to continue." };
+      return cart.pickupLocationId ? {} : { line1: "Pick a kitchen so we know where to fire your order." };
     }
     const errors: Partial<Record<keyof DeliveryAddress, string>> = {};
-    if (!address.line1.trim()) errors.line1 = "Street address is required.";
-    if (!address.city.trim()) errors.city = "City is required.";
-    if (!isValidZip(address.zip)) errors.zip = "Enter a valid ZIP code.";
+    if (!address.line1.trim()) errors.line1 = "Where's it going? Add your street address.";
+    if (!address.city.trim()) errors.city = "Add your city so the driver finds you.";
+    if (!isValidZip(address.zip)) errors.zip = "That ZIP doesn't look right. Use 5 digits, like 94103.";
     return errors;
   }
 
   function cardErrorsFor(): Partial<Record<keyof CardDetails, string>> {
     if (payment !== "card") return {};
     const errors: Partial<Record<keyof CardDetails, string>> = {};
-    if (!isValidName(card.name)) errors.name = "Enter the name on your card.";
-    if (!isValidCardNumber(card.number)) errors.number = "Enter a valid card number.";
-    if (!isValidExpiry(card.expiry)) errors.expiry = "Enter a valid, unexpired date (MM/YY).";
-    if (!isValidCvc(card.cvc)) errors.cvc = "Enter a valid CVC.";
+    if (!isValidName(card.name)) errors.name = "Add the name exactly as it's printed on the card.";
+    if (!isValidCardNumber(card.number)) errors.number = "That card number doesn't look right. Use the test card 4242 4242 4242 4242.";
+    if (!isValidExpiry(card.expiry)) errors.expiry = "Use a future date in MM/YY format, like 08/28.";
+    if (!isValidCvc(card.cvc)) errors.cvc = "The CVC is the 3 or 4 digits on the back of the card.";
     return errors;
   }
 

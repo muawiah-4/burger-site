@@ -12,7 +12,7 @@ const LINES = [
   "Fresh dough, fired daily.",
   "Build a combo below.",
   "Zero frozen shortcuts, promise.",
-  "Hungry? I won't tell.",
+  "Hungry already? Same.",
 ];
 
 export function Mascot() {

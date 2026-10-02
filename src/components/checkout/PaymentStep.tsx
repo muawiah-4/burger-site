@@ -37,7 +37,7 @@ export function PaymentStep({
   return (
     <div>
       <h2 className="font-display text-xl font-extrabold text-cream">Payment</h2>
-      <p className="mt-1 text-sm text-cream/60">Choose how you&apos;d like to pay.</p>
+      <p className="mt-1 text-sm text-cream/70">Last step before we fire up the grill. How are you paying?</p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {METHODS.map((m) => {
@@ -124,14 +124,14 @@ export function PaymentStep({
       {method === "cash" && (
         <p className="mt-6 rounded-2xl bg-cream/5 p-4 text-sm text-cream/60">
           {fulfillment === "pickup"
-            ? "Pay with cash when you collect your order at the counter."
-            : "Pay with cash when your order arrives. Please have exact change ready if possible."}
+            ? "Pay at the counter when you grab your bag. We'll have it hot and waiting."
+            : "Pay your driver when the food lands. Exact change keeps everyone moving."}
         </p>
       )}
 
       {method === "wallet" && (
         <p className="mt-6 rounded-2xl bg-cream/5 p-4 text-sm text-cream/60">
-          Digital wallet checkout (Apple Pay / Google Pay) will be available at pickup or delivery.
+          Tap to pay with Apple Pay or Google Pay when you pick up or when your driver arrives.
         </p>
       )}
     </div>
