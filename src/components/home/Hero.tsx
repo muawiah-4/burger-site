@@ -23,23 +23,32 @@ export function Hero() {
     <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-charcoal pb-16 pt-28 sm:min-h-[88vh] sm:pb-20 sm:pt-36">
       {/* The poster is what paints first (and all phones get), so fetch it early. React hoists this into <head>. */}
       <link rel="preload" as="image" href={HERO_POSTER} fetchPriority="high" />
-      {/* The footage is a three-panel split. From md up it is scaled from the right edge so the
-          left seam sits under the text gradient; the right seam is feathered out below. */}
-      <div className="absolute inset-0 md:origin-right md:scale-150">
-        <AmbientVideo
-          webm="/videos/hero-cooking-720p.webm"
-          mp4="/videos/hero-cooking-720p.mp4"
-          poster={HERO_POSTER}
-          minWidth={768}
-        />
+      {/* The footage is a three-panel split (1280x720, ~9px dividers at 33.6% and 66.3% of its width).
+          From md up the footage sits in a right-anchored 16:9 box, so a point in the footage is always the
+          same point in the box whatever the viewport's shape, and the box is scaled 1.55x from the right:
+          that pushes the first divider off-screen and the second to just under half the width, where a
+          band drawn in footage coordinates (so it can't drift off the seam) covers it. */}
+      <div className="absolute inset-0 md:origin-right md:scale-[1.55]">
+        <div className="absolute inset-y-0 left-0 right-0 md:left-auto md:aspect-video md:min-w-full">
+          <AmbientVideo
+            webm="/videos/hero-cooking-720p.webm"
+            mp4="/videos/hero-cooking-720p.mp4"
+            poster={HERO_POSTER}
+            minWidth={768}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-[66.25%] hidden w-[18%] -translate-x-1/2 bg-gradient-to-r from-transparent via-charcoal/80 to-transparent md:block"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-[66.25%] hidden w-[4%] -translate-x-1/2 bg-[linear-gradient(to_right,transparent,var(--color-charcoal)_30%,var(--color-charcoal)_70%,transparent)] md:block"
+          />
+        </div>
       </div>
       {/* Darkens the video toward the text so copy stays legible without cropping the footage itself. */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/55 to-charcoal/10" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-charcoal/90 via-charcoal/40 to-transparent" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-[49.5%] hidden w-72 -translate-x-1/2 bg-gradient-to-r from-transparent via-charcoal/85 to-transparent md:block"
-      />
 
       <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8">
         <div className="max-w-xl">
