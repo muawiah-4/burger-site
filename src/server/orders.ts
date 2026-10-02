@@ -118,7 +118,7 @@ export function createOrder(
       };
     }
 
-    const priced = priceOrder(input, promoLookup(db));
+    const priced = priceOrder(input, promoLookup(db), now);
     if (priced.totalCents !== input.expectedTotalCents) return { kind: "total_mismatch", quote: priced };
 
     const orderId = randomUUID();
@@ -130,8 +130,8 @@ export function createOrder(
     db.prepare(
       `INSERT INTO orders (id, display_number, created_at, updated_at, fulfillment, location_id, city, zip,
          payment_method, status, subtotal_cents, delivery_fee_cents, discount_cents, tax_cents, total_cents,
-         promo_code, eta_min, eta_max, tracking_token, idempotency_key, request_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         promo_code, eta_min, eta_max, tracking_token, idempotency_key, request_hash, tip_cents, scheduled_for)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       orderId,
       displayNumber,
@@ -152,7 +152,9 @@ export function createOrder(
       priced.eta.max,
       trackingToken,
       idempotencyKey,
-      requestHash
+      requestHash,
+      priced.tipCents,
+      priced.scheduledFor
     );
 
     const insertItem = db.prepare(
@@ -213,6 +215,8 @@ interface OrderRow {
   eta_min: number;
   eta_max: number;
   tracking_token: string;
+  tip_cents: number;
+  scheduled_for: string | null;
 }
 
 interface ItemRow {
@@ -230,15 +234,26 @@ function tokensMatch(expected: string, given: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/**
+ * When the simulated kitchen starts on an order. ASAP orders start when placed.
+ * A scheduled order starts one full ETA (prep + delivery/pickup window) before its
+ * slot, so it's delivered / ready at the chosen time, but never before it was placed.
+ */
+export function kitchenStartMs(row: { created_at: string; scheduled_for: string | null; eta_max: number }): number {
+  const created = Date.parse(row.created_at);
+  if (!row.scheduled_for) return created;
+  return Math.max(created, Date.parse(row.scheduled_for) - row.eta_max * 60_000);
+}
+
 /** Applies the simulated kitchen's due steps (if any) and returns the current status. */
 function advanceBySimulation(db: Db, row: OrderRow, nowMs: number): OrderStatus {
   if (!kitchenSimulationEnabled()) return row.status;
-  const steps = pendingSimulatedSteps(row.fulfillment, row.status, Date.parse(row.created_at), row.eta_max, nowMs);
+  const steps = pendingSimulatedSteps(row.fulfillment, row.status, kitchenStartMs(row), row.eta_max, nowMs);
   if (steps.length === 0) return row.status;
   return runInTransaction(db, () => {
     // Re-read under the lock: another request may have advanced it already.
     const fresh = db.prepare("SELECT status FROM orders WHERE id = ?").get(row.id) as { status: OrderStatus };
-    const due = pendingSimulatedSteps(row.fulfillment, fresh.status, Date.parse(row.created_at), row.eta_max, nowMs);
+    const due = pendingSimulatedSteps(row.fulfillment, fresh.status, kitchenStartMs(row), row.eta_max, nowMs);
     if (due.length === 0) return fresh.status;
     const last = db.prepare("SELECT at FROM order_events WHERE order_id = ? ORDER BY id DESC LIMIT 1").get(row.id) as
       | { at: string }
@@ -293,6 +308,8 @@ function toDto(db: Db, row: OrderRow, status: OrderStatus): OrderDto {
     taxCents: row.tax_cents,
     totalCents: row.total_cents,
     promoCode: row.promo_code,
+    tipCents: row.tip_cents,
+    scheduledFor: row.scheduled_for,
     eta: { min: row.eta_min, max: row.eta_max },
   };
 }

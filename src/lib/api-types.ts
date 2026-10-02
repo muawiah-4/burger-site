@@ -1,4 +1,5 @@
 import type { FulfillmentMethod, OrderStatus, PaymentMethod } from "@/types";
+import type { TipChoice } from "@/lib/tip";
 
 // Wire types for the /api routes. Shared by the route handlers and the browser
 // client; contains no pricing rules or promo data. All money is integer cents.
@@ -19,6 +20,10 @@ export interface QuoteRequest {
   locationId?: string | null;
   items: QuoteItemInput[];
   promoCode?: string;
+  /** Driver tip choice (delivery only; ignored for pickup). The server computes the amount. */
+  tip?: TipChoice;
+  /** Order for later: an ISO time that must be one of today's 15-minute slots. Omit for ASAP. */
+  scheduledFor?: string | null;
 }
 
 export interface CreateOrderRequest extends QuoteRequest {
@@ -64,6 +69,9 @@ export interface Quote {
   taxCents: number;
   totalCents: number;
   promo: PromoOutcome | null;
+  /** Included in totalCents. 0 for pickup. */
+  tipCents: number;
+  scheduledFor: string | null;
   eta: { min: number; max: number };
 }
 
@@ -95,6 +103,8 @@ export interface OrderDto {
   taxCents: number;
   totalCents: number;
   promoCode: string | null;
+  tipCents: number;
+  scheduledFor: string | null;
   eta: { min: number; max: number };
 }
 

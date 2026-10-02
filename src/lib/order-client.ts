@@ -196,6 +196,8 @@ export function orderDtoToPlacedOrder(dto: OrderDto): PlacedOrder & { status: Or
     tax: dto.taxCents / 100,
     total: dto.totalCents / 100,
     promoCode: dto.promoCode ?? undefined,
+    ...(dto.tipCents > 0 ? { tip: dto.tipCents / 100 } : {}),
+    ...(dto.scheduledFor ? { scheduledFor: dto.scheduledFor } : {}),
     placedAt: dto.createdAt,
     estimatedMinutes: [dto.eta.min, dto.eta.max],
     status: dto.status,

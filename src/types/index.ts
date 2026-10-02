@@ -159,4 +159,8 @@ export interface PlacedOrder {
   promoCode?: string;
   placedAt: string;
   estimatedMinutes: [number, number];
+  /** Driver tip in dollars (server orders; already included in total). */
+  tip?: number;
+  /** ISO time for an order placed for later (server orders). */
+  scheduledFor?: string;
 }

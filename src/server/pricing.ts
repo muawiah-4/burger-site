@@ -4,6 +4,8 @@ import type { PricedLine, PricedOption, PromoOutcome, Quote, QuoteRequest } from
 import { productMap, getProductsByCategory } from "@/lib/data/products";
 import { COMBO_SOFT_DRINK_IDS, deals } from "@/lib/data/deals";
 import { locations } from "@/lib/data/locations";
+import { computeTip, NO_TIP } from "@/lib/tip";
+import { isAvailableSlot } from "@/lib/schedule";
 
 /**
  * Authoritative pricing. Everything is integer cents; the menu's dollar prices are
@@ -274,8 +276,30 @@ export function computeDeliveryFeeCents(fulfillment: FulfillmentMethod, subtotal
     : 0;
 }
 
+/**
+ * Validates an order-for-later time with the same rules the checkout uses
+ * (src/lib/schedule.ts): one of today's 15-minute slots, at least 30 minutes
+ * ahead, within the location's hours. Delivery uses the first location's hours,
+ * as the checkout does. Returns the normalised ISO time, or null for ASAP.
+ */
+export function validateSchedule(
+  scheduledFor: string | null | undefined,
+  locationHours: string,
+  now: Date
+): string | null {
+  if (!scheduledFor) return null;
+  if (!isAvailableSlot(scheduledFor, now, locationHours)) {
+    throw new PricingError(
+      "invalid_schedule",
+      "That time is no longer available. Pick another slot or choose ASAP.",
+      ["scheduledFor"]
+    );
+  }
+  return new Date(scheduledFor).toISOString();
+}
+
 /** Prices a whole order. Throws {@link PricingError} for anything the menu doesn't allow. */
-export function priceOrder(input: QuoteRequest, findPromo: PromoLookup): Quote {
+export function priceOrder(input: QuoteRequest, findPromo: PromoLookup, now = new Date()): Quote {
   if (input.items.length === 0) throw new PricingError("empty_order", "Your cart is empty.", ["items"]);
 
   const locationId = input.locationId ?? null;
@@ -331,6 +355,9 @@ export function priceOrder(input: QuoteRequest, findPromo: PromoLookup): Quote {
   const deliveryFeeCents = computeDeliveryFeeCents(input.fulfillment, subtotalCents);
   const taxable = subtotalCents - discountCents;
   const taxCents = computeTaxCents(taxable);
+  // Same computeTip as the checkout display, on the pre-discount subtotal. Delivery only; not taxed.
+  const tipCents = input.fulfillment === "delivery" ? computeTip(subtotalCents, input.tip ?? NO_TIP) : 0;
+  const scheduledFor = validateSchedule(input.scheduledFor, (location ?? locations[0]).hours, now);
 
   return {
     fulfillment: input.fulfillment,
@@ -340,8 +367,10 @@ export function priceOrder(input: QuoteRequest, findPromo: PromoLookup): Quote {
     deliveryFeeCents,
     discountCents,
     taxCents,
-    totalCents: taxable + deliveryFeeCents + taxCents,
+    tipCents,
+    totalCents: taxable + deliveryFeeCents + taxCents + tipCents,
     promo,
+    scheduledFor,
     eta: ETA_MINUTES[input.fulfillment],
   };
 }

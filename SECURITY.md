@@ -28,6 +28,10 @@ Unexpected errors are logged as structured JSON without request bodies and retur
 Order status is authoritative on the server. When an order is read, a deterministic "simulated kitchen"
 (`src/server/kitchen.ts`) moves it forward on a fixed schedule (cooking at 25% of the ETA's upper bound,
 out for delivery / ready at 65%, delivered at 100%), storing an event per step. Status never moves backwards.
+A scheduled order starts one ETA before its slot (never before it was placed). The driver tip (delivery only)
+is computed by the server with the same `computeTip` the checkout displays and is included in the total;
+`scheduledFor` must be one of the slots the checkout offers (`src/lib/schedule.ts`), evaluated in the
+server's local time zone.
 
 ## What is stored, where, and for how long
 
@@ -35,7 +39,7 @@ out for delivery / ready at 65%, delivered at 100%), storing an event per step. 
 
 | Table | Contents |
 | --- | --- |
-| `orders` | Id, display number, timestamps, delivery/pickup, pickup location id, **city and ZIP only** for delivery, payment *method* (card/cash/wallet), status, the priced amounts in cents, promo code, ETA, tracking token, idempotency key and a SHA-256 hash of the request body |
+| `orders` | Id, display number, timestamps, delivery/pickup, pickup location id, **city and ZIP only** for delivery, payment *method* (card/cash/wallet), status, the priced amounts in cents (including the driver tip), promo code, ETA, scheduled time (order for later), tracking token, idempotency key and a SHA-256 hash of the request body |
 | `order_items` | Product or deal id, name, quantity, unit price, chosen options |
 | `order_events` | Status changes with timestamps and their source (order, kitchen-sim, admin) |
 | `promotions` / `promotion_redemptions` | Promo rules; which order redeemed which code and for how much |

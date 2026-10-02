@@ -9,6 +9,7 @@ import { OrderStatus, PlacedOrder } from "@/types";
 import { ApiError, fetchOrder, getOrderRef, orderDtoToPlacedOrder } from "@/lib/order-client";
 import { getOrder, orderDisplayNumber } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
+import { formatSlot } from "@/lib/schedule";
 import { paymentLabel } from "@/lib/payment";
 import { locations } from "@/lib/data/locations";
 import { OrderProgress } from "@/components/checkout/OrderProgress";
@@ -110,7 +111,10 @@ export default function OrderPage() {
           Order <span className="font-display font-bold text-cream">#{orderDisplayNumber(order)}</span>
         </p>
         <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-ember-text">
-          <Clock size={14} /> Estimated {order.estimatedMinutes[0]}–{order.estimatedMinutes[1]} min
+          <Clock size={14} />{" "}
+          {order.scheduledFor
+            ? `Scheduled for ${formatSlot(new Date(order.scheduledFor))}`
+            : `Estimated ${order.estimatedMinutes[0]}–${order.estimatedMinutes[1]} min`}
         </p>
         <DemoNotice className="mx-auto mt-5 max-w-md" />
       </div>
@@ -157,6 +161,7 @@ export default function OrderPage() {
                 : "Pay the driver when your order arrives"
               : `via ${paymentLabel(order.payment, order.fulfillment)}`}
           </p>
+          {order.tip ? <p className="text-xs text-cream/60">Includes {formatPrice(order.tip)} driver tip</p> : null}
         </div>
       </div>
 

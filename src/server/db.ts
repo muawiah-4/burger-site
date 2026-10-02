@@ -89,6 +89,11 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX idx_order_events_order ON order_events(order_id, id);
   `,
+  // v2: driver tip (server-computed, included in total_cents) and order-for-later time.
+  `
+  ALTER TABLE orders ADD COLUMN tip_cents INTEGER NOT NULL DEFAULT 0 CHECK (tip_cents >= 0);
+  ALTER TABLE orders ADD COLUMN scheduled_for TEXT;
+  `,
 ];
 
 /** Seed promotions (idempotent). max_redemptions NULL = unlimited. */

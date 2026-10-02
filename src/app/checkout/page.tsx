@@ -87,7 +87,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<DeliveryAddress>(EMPTY_ADDRESS);
   const [payment, setPayment] = useState<PaymentMethod>("card");
   const [card, setCard] = useState<CardDetails>(EMPTY_CARD);
-  // Display-only for now: pricing (computeTotals) is untouched; the review UI adds the tip.
+  // The tip choice is sent with the order; the server computes the amount and includes it in the total.
   const [tipChoice, setTipChoice] = useState<TipChoice>(NO_TIP);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null);
   const [scheduleError, setScheduleError] = useState<string | undefined>();
@@ -341,9 +341,13 @@ export default function CheckoutPage() {
     setPlaceError(null);
     // The server re-prices the order; we send the total the customer is looking at
     // and it refuses (409 + fresh quote) if its total differs.
-    const shownTotalCents = Math.round((placedTotal ?? cart.totals.total) * 100);
+    // The tip is computed with the same computeTip the server uses, so the shown total matches.
+    const shownTotalCents =
+      placedTotal !== null ? Math.round(placedTotal * 100) : Math.round(cart.totals.total * 100) + tipCents;
     const body: CreateOrderRequest = {
       ...buildQuoteRequest(cart.items, cart.fulfillment, cart.pickupLocationId, cart.promoValid ? cart.promoCode : ""),
+      ...(cart.fulfillment === "delivery" && tipChoice.kind !== "none" ? { tip: tipChoice } : {}),
+      ...(scheduledFor ? { scheduledFor } : {}),
       paymentMethod: payment,
       // Contact details and the street address stay in this page; the server
       // only receives the city and ZIP for the tracker.
@@ -360,6 +364,8 @@ export default function CheckoutPage() {
     try {
       const created = await placeOrderRequest(body, idempotency.current.key);
       saveOrderRef({ ...created, placedAt: new Date().toISOString() });
+      // Keep the button's total steady while clearCart() zeroes the cart below.
+      setPlacedTotal(shownTotalCents / 100);
       // Card fields only ever live in this component's state and are never saved
       // or sent; drop them now rather than keeping them around while we navigate away.
       setCard(EMPTY_CARD);
@@ -454,7 +460,11 @@ export default function CheckoutPage() {
                   onEditItems={cart.openCart}
                   scheduledFor={scheduledFor}
                   tip={tipChoice}
-                  onTipChange={setTipChoice}
+                  onTipChange={(t) => {
+                    setTipChoice(t);
+                    // A total confirmed after a 409 no longer applies once the tip changes.
+                    setPlacedTotal(null);
+                  }}
                   subtotalCents={Math.round(cart.totals.subtotal * 100)}
                 />
               )}

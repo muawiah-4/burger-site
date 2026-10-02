@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { MAX_TIP_CENTS } from "@/lib/tip";
 
 // Request schemas for the /api routes. Every size is capped; unknown keys are rejected.
 
@@ -33,6 +34,14 @@ export const quoteRequestSchema = z.strictObject({
     .max(30, "Too many lines in one order")
     .refine((items) => items.reduce((n, i) => n + i.qty, 0) <= 100, "Too many items in one order"),
   promoCode: promoCode.optional(),
+  tip: z
+    .discriminatedUnion("kind", [
+      z.strictObject({ kind: z.literal("none") }),
+      z.strictObject({ kind: z.literal("percent"), percent: z.union([z.literal(10), z.literal(15), z.literal(20)]) }),
+      z.strictObject({ kind: z.literal("custom"), cents: z.number().int().min(0).max(MAX_TIP_CENTS) }),
+    ])
+    .optional(),
+  scheduledFor: z.iso.datetime({ offset: true }).nullish(),
 });
 
 export const createOrderSchema = quoteRequestSchema
