@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+        // Only Unsplash photo URLs (see src/lib/data/images.ts); nothing else on the host.
+        pathname: "/photo-**",
       },
     ],
     formats: ["image/avif", "image/webp"],

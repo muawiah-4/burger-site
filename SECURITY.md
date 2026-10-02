@@ -45,8 +45,9 @@ server. Orders older than **30 days** are deleted (with their items, events and 
 server starts and periodically as new orders arrive. The database file is git-ignored. Tracking tokens are
 stored as-is so an idempotent retry can return the same token; treat the database file as sensitive.
 
-### In the browser (`localStorage`)
+### In the browser (`localStorage`, `sessionStorage`)
 
+Everything is in `localStorage`, apart from the in-progress checkout draft, which is in `sessionStorage`.
 There are no cookies.
 
 | Key | Contents | Retention |
@@ -55,6 +56,7 @@ There are no cookies.
 | `ember.orders.v2` | For each order placed on this device: order id, tracking token, display number, time placed. Nothing else. | The newest **20**, none older than **30 days**. |
 | `ember.orders.v1` | Orders saved on-device before the API existed (read-only now): items, prices, payment method, timestamps, city and ZIP | The newest **20** orders, none older than **30 days**. Enforced on every load. |
 | `ember.orders.latest` | Id of the most recent legacy order (for `/order/latest`) | Removed with the order it points to. |
+| `ember.checkout.draft.v1` (sessionStorage) | In-progress checkout: current step, contact details, delivery address, payment *method*, tip choice, scheduled time. **No card details.** | Until the order is placed, "Clear my data", or the tab is closed. |
 | `ember.user.v1` | Details you choose to save in Account → Saved Details (name, phone, email, street, city, ZIP) to pre-fill checkout | Until you change it, use "Clear my data", or clear site data. |
 
 What is **never** stored or sent:

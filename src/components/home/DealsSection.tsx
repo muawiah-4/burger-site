@@ -27,7 +27,7 @@ export function DealsSection() {
                 className="flex flex-col overflow-hidden rounded-3xl bg-charcoal-soft ring-1 ring-cream/5"
               >
                 <div className="relative aspect-[16/10] w-full">
-                  <Image src={deal.image} alt={deal.name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                  <Image src={deal.image} alt={deal.name} fill sizes="(min-width: 1280px) 392px, (min-width: 1024px) calc((100vw - 104px) / 3), (min-width: 640px) calc((100vw - 84px) / 2), calc(100vw - 40px)" className="object-cover" />
                   <div className="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-[11px] font-display font-bold uppercase tracking-wide text-charcoal">
                     Save {formatPrice(savings)}
                   </div>

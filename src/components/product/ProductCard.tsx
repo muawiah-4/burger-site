@@ -11,12 +11,15 @@ import { Badge } from "@/components/ui/Badge";
 import { useProductModalActions } from "@/context/product-modal-context";
 
 // Memoised: grids re-render on every filter keystroke, but a card only changes
-// when its own product/preload/index props do.
+// when its own product/preload/index props do. `ref` is a plain prop in React 19;
+// AnimatePresence mode="popLayout" passes one to measure the exiting card.
 export const ProductCard = memo(function ProductCard({
+  ref,
   product,
   preload = false,
   index = 0,
 }: {
+  ref?: React.Ref<HTMLButtonElement>;
   product: Product;
   /** Preload the image in <head> (Next 16 replacement for the deprecated `priority`). */
   preload?: boolean;
@@ -27,11 +30,13 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <m.button
+      ref={ref}
       layout
       type="button"
       onClick={() => open(product)}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.2 } }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{
         duration: 0.35,
@@ -39,14 +44,15 @@ export const ProductCard = memo(function ProductCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       className="focus-ring group flex flex-col overflow-hidden rounded-3xl border border-cream/10 bg-charcoal-raised text-left transition-all hover:-translate-y-0.5 hover:border-cream/25 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
-      aria-label={`View ${product.name}, ${formatPrice(product.price)}`}
+      aria-label={`View ${product.name}, ${formatPrice(product.price)}, ${product.calories} calories`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-charcoal-soft">
         <Image
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          // Matches the grid: 2 cols, 3 from md, 4 from lg, capped by the 1280px container.
+          sizes="(min-width: 1280px) 274px, (min-width: 1024px) calc((100vw - 124px) / 4), (min-width: 768px) calc((100vw - 104px) / 3), calc((100vw - 52px) / 2)"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           preload={preload}
         />
@@ -62,6 +68,9 @@ export const ProductCard = memo(function ProductCard({
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-display text-sm font-bold leading-tight text-cream">{product.name}</h3>
+          <span className="shrink-0 pt-0.5 text-[10px] font-semibold tabular-nums text-cream/60">
+            {product.calories} cal
+          </span>
         </div>
         <p className="line-clamp-2 text-xs leading-relaxed text-cream/60">{product.description}</p>
         <div className="mt-auto flex items-center justify-between pt-2">
