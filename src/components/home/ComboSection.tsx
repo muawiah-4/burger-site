@@ -1,5 +1,5 @@
 import { img } from "@/lib/data/images";
-import { deals } from "@/lib/data/deals";
+import { COMBO_SOFT_DRINK_IDS, deals } from "@/lib/data/deals";
 import { getProductsByCategory, productMap } from "@/lib/data/products";
 import { Product } from "@/types";
 import { type ComboChoice } from "./ComboCard";
@@ -7,7 +7,6 @@ import { ComboBuilder } from "./ComboBuilder";
 
 // Server Component: picks the burger/pizza/drink choices here and hands the client
 // card only id, name and image for each, instead of the whole menu.
-const SOFT_DRINK_IDS = ["dr-cola", "dr-diet-cola", "dr-lemonade", "dr-iced-tea", "dr-water"];
 
 function toChoice({ id, name, image }: Product): ComboChoice {
   return { id, name, image };
@@ -20,7 +19,7 @@ export function ComboSection() {
   if (!burgerDeal || !pizzaDeal) return null;
   const burgers = getProductsByCategory("burgers").map(toChoice);
   const pizzas = getProductsByCategory("pizza").map(toChoice);
-  const softDrinks = SOFT_DRINK_IDS.map((id) => productMap.get(id))
+  const softDrinks = COMBO_SOFT_DRINK_IDS.map((id) => productMap.get(id))
     .filter((p): p is Product => Boolean(p))
     .map(toChoice);
 
