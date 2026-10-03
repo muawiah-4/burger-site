@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildCsp } from "@/lib/csp";
 
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+
 /**
  * Sets a per-request nonce-based Content-Security-Policy. The static security
  * headers (nosniff, Referrer-Policy, Permissions-Policy, HSTS, X-Frame-Options)
@@ -8,7 +10,8 @@ import { buildCsp } from "@/lib/csp";
  */
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = buildCsp(nonce, process.env.NODE_ENV === "development");
+  const loopback = LOOPBACK_HOSTS.has(request.nextUrl.hostname);
+  const csp = buildCsp(nonce, process.env.NODE_ENV === "development", { loopback });
 
   // Next.js extracts the nonce from the request's CSP header during rendering.
   const requestHeaders = new Headers(request.headers);

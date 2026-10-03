@@ -186,7 +186,8 @@ upgrade-insecure-requests
 
 Development (`next dev`) adds `'unsafe-eval'` to `script-src` (React uses it for debugging), uses
 `style-src 'self' 'unsafe-inline'` (the dev runtime injects un-nonced styles), adds `ws: wss:` to
-`connect-src` for hot reload, and omits `upgrade-insecure-requests`.
+`connect-src` for hot reload, and omits `upgrade-insecure-requests`. Production also omits it on a
+loopback host (`localhost`), because Safari applies it to `http://localhost` and would break a local `next start`.
 
 Design notes:
 

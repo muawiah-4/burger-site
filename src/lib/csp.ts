@@ -4,7 +4,7 @@
  * its framework/inline scripts (see node_modules/next/dist/docs/01-app/02-guides/
  * content-security-policy.md).
  */
-export function buildCsp(nonce: string, isDev: boolean): string {
+export function buildCsp(nonce: string, isDev: boolean, { loopback = false }: { loopback?: boolean } = {}): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     // 'strict-dynamic' lets the nonced bootstrap load the rest of the chunks. React
@@ -31,6 +31,9 @@ export function buildCsp(nonce: string, isDev: boolean): string {
     "manifest-src": ["'self'"],
   };
   const policy = Object.entries(directives).map(([name, values]) => `${name} ${values.join(" ")}`);
-  if (!isDev) policy.push("upgrade-insecure-requests");
+  // Never on a loopback host: Safari (WebKit) applies upgrade-insecure-requests to
+  // http://localhost too (Chrome and Firefox exempt it), so a local `next start`
+  // would have every chunk rewritten to https://localhost and fail to hydrate.
+  if (!isDev && !loopback) policy.push("upgrade-insecure-requests");
   return policy.join("; ");
 }
