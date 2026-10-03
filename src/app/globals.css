@@ -57,6 +57,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* The navbar is position:fixed, so anything scrolled into view (keyboard focus,
+     #anchors, scrollIntoView) must stop below it instead of underneath it. */
+  scroll-padding-top: 6rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
