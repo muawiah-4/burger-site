@@ -37,7 +37,8 @@ test("checkout reaches the review step", async ({ page }) => {
   await page.getByRole("button", { name: /^Pickup/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
 
-  // Step 2: customer info
+  // Step 2: customer info (each step panel animates in; wait for it)
+  await expect(page.getByLabel("Full Name")).toBeVisible();
   await page.getByLabel("Full Name").fill("Jordan Rivera");
   await page.getByLabel("Phone Number").fill("(555) 123-4567");
   await page.getByLabel("Email").fill("jordan@example.com");

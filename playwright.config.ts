@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 4442;
+// E2E_PORT lets parallel checkouts (worktrees) run their own server side by side.
+const PORT = Number(process.env.E2E_PORT ?? 4442);
 const LOCAL_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 // PLAYWRIGHT_CHROME lets local runs drive the real, already-licensed/installed
@@ -25,13 +26,26 @@ export default defineConfig({
     // versions) the way video recording would.
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    launchOptions: executablePath ? { executablePath } : undefined,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // The same suite runs in Chromium and WebKit (Safari): WebKit differs in
+  // focus-on-click, CSP handling (upgrade-insecure-requests on localhost) and
+  // CSS feature support, which is exactly what these runs are here to catch.
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], launchOptions: executablePath ? { executablePath } : undefined },
+    },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+  ],
   webServer: {
     command: `npm run build && npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    // Safari (WebKit) won't store a Secure cookie over plain http://localhost
+    // (Chromium exempts localhost), so the signed-in session would be lost on
+    // the next request. Test-server only; see .env.example. Every test signs up
+    // a fresh account, so two browsers x repeats would trip the signup limit.
+    env: { INSECURE_COOKIES: "1", RATE_LIMIT_DISABLED: "1" },
   },
 });

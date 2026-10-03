@@ -34,6 +34,8 @@ test("sign up, place an order, and see it in Orders after a reload", async ({ pa
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Pay at pickup" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
+  // The step panel animates in; wait for it before clicking (WebKit races otherwise).
+  await expect(page.getByRole("heading", { name: "Review your order" })).toBeVisible();
   await page.getByRole("button", { name: /Place Order/ }).click();
   await expect(page).toHaveURL(/\/order\/[0-9a-f-]{36}/);
   const orderId = /\/order\/([0-9a-f-]{36})/.exec(page.url())![1];
