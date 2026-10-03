@@ -23,6 +23,29 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   );
 }
 
+// Safari doesn't focus a <button> or <a> on mouse click, so when a click opens a
+// dialog document.activeElement is <body> and there'd be nothing to return focus
+// to. Remember the control the pointer last pressed (capture phase, before any
+// handler opens a dialog); a key press means keyboard use, where focus is right.
+let lastPressed: HTMLElement | null = null;
+if (typeof document !== "undefined") {
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      lastPressed = e.target instanceof Element ? e.target.closest<HTMLElement>(FOCUSABLE) : null;
+    },
+    true
+  );
+  document.addEventListener("keydown", () => (lastPressed = null), true);
+}
+
+/** The element that opened a dialog: the focused one, or in Safari the one just clicked. */
+function getTrigger(): HTMLElement | null {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) return active;
+  return lastPressed?.isConnected ? lastPressed : null;
+}
+
 // Open dialogs, most recent last. Only the top one traps focus and reacts to
 // Escape, so a dialog opened from another dialog behaves correctly.
 const stack: symbol[] = [];
@@ -55,7 +78,7 @@ export function useDialog<T extends HTMLElement = HTMLElement>(
     const id = Symbol("dialog");
     stack.push(id);
     const isTop = () => stack[stack.length - 1] === id;
-    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const returnTo = getTrigger();
 
     const container = ref.current;
     (getInitialFocus() ?? container)?.focus({ preventScroll: true });
